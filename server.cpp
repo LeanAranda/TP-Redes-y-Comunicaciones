@@ -4,12 +4,15 @@
 
 #include <iostream>
 using namespace std;
+#include <sstream>
+#include <fstream>
 
 #include <windows.h>
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 // Need to link with Ws2_32.lib
 #pragma comment (lib, "Ws2_32.lib")
@@ -17,6 +20,9 @@ using namespace std;
 
 #define DEFAULT_BUFLEN 512
 #define DEFAULT_PORT "27015"
+
+
+int verificarUsuario(char* buffEntrada, char* buffSalida);
 
 ///server
 
@@ -33,6 +39,7 @@ int __cdecl main(void)
 
     int iSendResult;
     char recvbuf[DEFAULT_BUFLEN];
+    char sendbuf[DEFAULT_BUFLEN];
     int recvbuflen = DEFAULT_BUFLEN;
 
     // Initialize Winsock
@@ -102,8 +109,9 @@ int __cdecl main(void)
     closesocket(ListenSocket);
 
     // Receive until the peer shuts down the connection
+    /*
     do {
-        /*
+
         iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
         if (iResult > 0) {
             printf("Bytes received: %d\n", iResult);
@@ -126,13 +134,73 @@ int __cdecl main(void)
             WSACleanup();
             return 1;
         }
-        */
+
         iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
         if(iResult > 0){
             cout << "el cliente dice: " << recvbuf << endl;
+
         }
 
-    } while (/*iResult > 0*/true);
+    } while (/*iResult > 0/true);
+    */
+    /*
+    do{
+        strcpy(sendbuf, "Ingrese usuario y contrasenia separados por ;");
+        cout << "enviando" << endl;
+        iSendResult = send( ClientSocket, sendbuf, iResult, 0 );
+        cout << "esperando" << endl;
+        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+
+        string user, password;
+        stringstream cadena;
+
+        cadena << recvbuf;
+
+        getline(cadena, user, ';');
+        getline(cadena, password, ';');
+
+        cout << "usuario: " << user << endl;
+        cout << "contrasenia: " << password << endl;
+    }while(true);
+
+    */
+
+
+    /// --- conexión de test
+    /*
+    iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+    if (iResult > 0) {
+        cout << "recibido " << recvbuf << endl;
+
+        // Echo the buffer back to the sender
+        iSendResult = send( ClientSocket, recvbuf, iResult, 0 );
+
+        cout << "enviado" << endl;
+    }
+    */
+    /// ---
+
+    memset(sendbuf, 0, sizeof(sendbuf));
+    memset(recvbuf, 0, sizeof(recvbuf));
+
+    do{
+
+        strcat(sendbuf, "Ingrese usuario y contrasenia separados por ;\n");
+        iSendResult = send( ClientSocket, sendbuf, sizeof(sendbuf), 0 );
+
+        memset(sendbuf, 0, sizeof(sendbuf));
+
+
+        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
+
+        int result = verificarUsuario(recvbuf, sendbuf);
+        //iSendResult = send( ClientSocket, sendbuf, sizeof(sendbuf), 0 );
+
+        memset(recvbuf, 0, sizeof(recvbuf));
+
+
+    }while(iResult > 0);
+
 
     // shutdown the connection since we're done
     iResult = shutdown(ClientSocket, SD_SEND);
@@ -148,4 +216,52 @@ int __cdecl main(void)
     WSACleanup();
 
     return 0;
+}
+
+
+int verificarUsuario(char* buffEntrada, char* buffSalida){
+
+    int msg = 1;
+
+    string user, password;
+    stringstream cadena;
+
+    cadena << buffEntrada;
+
+    getline(cadena, user, ';');
+    getline(cadena, password, ';');
+
+    /*
+    cout << "usuario: " << user << endl;
+    cout << "contrasenia: " << password << endl;
+    */
+
+    fstream autenticacion("autenticacion.txt");
+
+    string userAux, passwordAux, texto;
+    stringstream texto2;
+
+    while(getline (autenticacion, texto) && msg == 1){
+
+        texto2 << texto;
+
+        getline(texto2, userAux, ';');
+        getline(texto2, passwordAux, ';');
+
+        /*
+        cout << "\nuser-> " << userAux << endl;
+        cout << "\npassword-> " << passwordAux << endl;
+        */
+
+        if(user == userAux && password == passwordAux){
+            msg = 2;
+        }
+    }
+
+    switch(msg){
+        case 1: strcpy(buffSalida, "ERROR: el usuario no esta registrado!\n\n"); break;
+        case 2: strcpy(buffSalida, "Usuario encontrado!\n\n"); break;
+    }
+
+    return msg;
 }

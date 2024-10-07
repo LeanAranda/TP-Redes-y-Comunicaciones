@@ -29,7 +29,8 @@ int __cdecl main(void /*int argc, char **argv*/)
     struct addrinfo *result = NULL,
                     *ptr = NULL,
                     hints;
-    const char *sendbuf = "this is a test";
+    //const char *sendbuf = "this is a test";
+    char sendbuf[DEFAULT_BUFLEN];
     char recvbuf[DEFAULT_BUFLEN];
     int iResult;
     int recvbuflen = DEFAULT_BUFLEN;
@@ -54,13 +55,34 @@ int __cdecl main(void /*int argc, char **argv*/)
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
 
-    // Resolve the server address and port
-    iResult = getaddrinfo(/*argv[1]*/ "192.168.0.101", DEFAULT_PORT, &hints, &result);
-    if ( iResult != 0 ) {
-        printf("getaddrinfo failed with error: %d\n", iResult);
-        WSACleanup();
-        return 1;
-    }
+
+    /// Resolve the server address and port
+
+    do{
+        if(false){
+            char ip[30], puerto[30];
+
+            cout << "Ingrese ip" << endl;
+
+            cin.getline(ip, 30);
+
+            cout << "Ingrese puerto" << endl;
+            cin.getline(puerto, 30);
+
+            iResult = getaddrinfo(ip, puerto, &hints, &result);
+        }else{
+            iResult = getaddrinfo("192.168.0.101", DEFAULT_PORT, &hints, &result);
+        }
+
+        if ( iResult != 0 ) {
+            cerr << "ERROR: ip o puerto incorrectos!\n" << endl;
+            //printf("getaddrinfo failed with error: %d\n", iResult);
+            /*
+            WSACleanup();
+            return 1;
+            */
+        }
+    }while(iResult != 0);
 
     // Attempt to connect to an address until one succeeds
     for(ptr=result; ptr != NULL ;ptr=ptr->ai_next) {
@@ -125,18 +147,62 @@ int __cdecl main(void /*int argc, char **argv*/)
             printf("recv failed with error: %d\n", WSAGetLastError());
 
     } while( iResult > 0 );
-    */
 
-    char buff[DEFAULT_BUFLEN];
 
     do{
         cout << "escribe un mensaje" << endl;
         //cin >> buff;
-        cin.getline(buff, DEFAULT_BUFLEN);
+        cin.getline(sendbuf, DEFAULT_BUFLEN);
         cout << "\n";
-        iResult = send( ConnectSocket, buff, sizeof(buff)/*(int)strlen(buff)*/, 0 );
-        memset(buff, 0, sizeof(buff));
+        iResult = send( ConnectSocket, sendbuf, sizeof(sendbuf)/*(int)strlen(buff)/, 0 );
+        memset(sendbuf, 0, sizeof(sendbuf));
     }while(true);
+    */
+    /*
+    do{
+        cout << "esperando" << endl;
+        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+
+        cout << recvbuf << endl;
+        cout << "enviar" << endl;
+        cin.getline(sendbuf, DEFAULT_BUFLEN);
+
+        iResult = send( ConnectSocket, sendbuf, sizeof(sendbuf)/*(int)strlen(buff)/, 0 );
+        memset(sendbuf, 0, sizeof(sendbuf));
+
+    }while(true);
+    */
+
+
+    /// --- conexión de test
+    /*
+    // Send an initial buffer
+    iResult = send( ConnectSocket, sendbuf, sizeof(sendbuf), 0 );
+    cout << "enviado" << endl;
+
+    iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+    if (iResult > 0){
+        cout << "recibido " << recvbuf << endl;
+    }
+    */
+    /// ---
+
+
+    do{
+        system("cls");
+
+        memset(sendbuf, 0, sizeof(sendbuf));
+        memset(recvbuf, 0, sizeof(recvbuf));
+
+        iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
+
+        cout << recvbuf << endl;
+
+        cin.getline(sendbuf, DEFAULT_BUFLEN);
+        cout << "\n" << endl;
+
+        iResult = send( ConnectSocket, sendbuf, sizeof(sendbuf), 0);
+    }while(iResult > 0);
 
     // cleanup
     closesocket(ConnectSocket);
