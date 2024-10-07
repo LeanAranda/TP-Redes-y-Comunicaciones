@@ -33,16 +33,18 @@ public:
         }
     }
 
-    void Recibir(char* datos){
+    int Recibir(char* datos){
+        int resultado = recv(client, buffer, sizeof(buffer), 0);
 
-        if(recv(client, buffer, sizeof(buffer), 0) > 0){
+        if(resultado > 0){
             cout << "El cliente dice: " << buffer << endl;
-            strcpy(datos, buffer);
-        }else{
-            CerrarSocket();
         }
+
+        strcpy(datos, buffer);
+
         memset(buffer, 0, sizeof(buffer));
 
+        return resultado;
     }
 
 
@@ -89,112 +91,104 @@ public:
     }
 };
 
+/// funciones
 User* verificarUsuario(char* datos);
-
+void serverLog(string log);
+void verRegistro(char* datos);
+void usuarios(char* datos, User* user, Server* server);
 
 
 int main(){
-
+    /// crear servidor
     Server *Servidor = new Server();
     char datos[1024];
-    strcpy(datos, " ");
+    strcpy(datos, "\n");
+    int resultado;
 
+    serverLog("============================================\n");
+    serverLog("Servidor iniciado\n");
+    serverLog("============================================\n");
+    serverLog("Socket creado. Puerto de escucha:5555\n");
 
-    time_t timestamp = time(NULL);
-    struct tm datetime = *localtime(&timestamp);
-    char timeOutput[50];
-    strftime(timeOutput, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
-
-    ofstream serverLog;
-    serverLog.open("server.log", std::ios_base::app);
-    serverLog << timeOutput << ": ============================================\n";
-    serverLog << timeOutput << ": Servidor iniciado\n";
-    serverLog << timeOutput << ": ============================================\n";
-    serverLog << timeOutput << ": Socket creado. Puerto de escucha:5555\n";
-    serverLog.flush();
-    serverLog.close();
-
-
-    while(true){
+    /// menú de inicio de sesion
+    do{
         strcat(datos, "Ingrese usuario y contrasenia separado por ;\n");
 
         Servidor->Enviar(datos);
         ZeroMemory(datos, 1024);
 
-        Servidor->Recibir(datos);
+        resultado = Servidor->Recibir(datos);
 
         User *usuario = verificarUsuario(datos);
 
+        // si el logueo es exitoso
         if(usuario != NULL){
-            usuario->toString();
+            //usuario->toString();
 
-            timestamp = time(NULL);
-            //ZeroMemory(timeOutput, 50);
-            strftime(timeOutput, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
+            serverLog("Inicio de sesion -- Usuario " + usuario->username +"\n");
 
-            serverLog.open("server.log", std::ios_base::app);
-            serverLog << timeOutput << ": Inicio de sesión -- Usuario " + usuario->username +"\n";
-            serverLog.flush();
-            serverLog.close();
+            //ZeroMemory(datos, 1024);
 
-            ZeroMemory(datos, 1024);
-
-            string opciones = "\n----------------------------------------\n";
+            string opciones = "----------------------------------------\n";
             opciones += "Lista de opciones:\n";
             opciones += "----------------------------------------\n";
 
             if(usuario->role == "COLECCIONISTA"){
-                //strcat(datos, "-> RegistrarFigurita\n");
-                //strcat(datos, "-> Intercambio\n");
-                opciones += "-> RegistrarFigurita\n";
-                opciones += "-> Intercambio\n";
+                opciones += "-> registrar-figurita\n";
+                opciones += "-> intercambio\n";
             }
 
             if(usuario->role == "ADMIN"){
-                //strcat(datos, "-> AltaUsuario\n");
-                //strcat(datos, "-> BajaUsuario\n");
-                //strcat(datos, "-> RegistroActividades\n");
-                opciones += "-> AltaUsuario\n";
-                opciones += "-> BajaUsuario\n";
-                opciones += "-> RegistroActividades\n";
+                opciones += "-> usuarios\n";
+                opciones += "-> registro\n";
             }
 
-            //strcat(datos, "-> Salir\n");
-            //strcat(datos, "--------------------\n");
-            opciones += "-> Salir\n";
+            opciones += "-> salir\n";
             opciones += "----------------------------------------\n";
 
-            while(true){
-                /*
-                strcpy(datos, "--------------------\nLista de opciones:\n--------------------\n");
+            string comando;
 
-                if(usuario->role == "COLECCIONISTA"){
-                    strcat(datos, "-> RegistrarFigurita\n");
-                    strcat(datos, "-> Intercambio\n");
-
-                }
-
-                if(usuario->role == "ADMIN"){
-                    strcat(datos, "-> AltaUsuario\n");
-                    strcat(datos, "-> BajaUsuario\n");
-                    strcat(datos, "-> RegistroActividades\n");
-
-                }
-
-                strcat(datos, "-> Salir\n");
-                strcat(datos, "--------------------\n");
-
-                Servidor->Enviar(datos);
-                */
-
+            ///menú de comandos
+            do{
                 strcat(datos, opciones.data());
                 Servidor->Enviar(datos);
                 ZeroMemory(datos, 1024);
-                Servidor->Recibir(datos);
-            }
+                resultado = Servidor->Recibir(datos);
+
+                comando = datos;
+
+                string mensaje;
+
+                if(comando == "usuarios" && usuario->role == "ADMIN"){
+                    usuarios(datos, usuario, Servidor);
+                }
+                else if(comando == "registro" && usuario->role == "ADMIN"){
+                    verRegistro(datos);
+                }
+                else if(comando == "salir"){
+                    serverLog("Cierre de sesion -- Usuario " + usuario->username +"\n");
+
+                    mensaje = "Adios " + usuario->username +  "!!\n\n";
+                    strcpy(datos, mensaje.data());
+                    free(usuario);
+                }
+                else{
+                    mensaje = "Comando invalido!\n\n";
+                    strcpy(datos, mensaje.data());
+                }
+
+            }while(comando != "salir" && resultado > 0);
         }
 
-    }
+    }while(resultado > 0);
+
+    /// cerrar servidor
+
+    serverLog("============================================\n");
+    serverLog("Cerrando servidor y socket...\n");
+    serverLog("============================================\n");
+
+    Servidor->CerrarSocket();
 }
 
 
@@ -221,24 +215,99 @@ User* verificarUsuario(char* datos){
 
         getline(txt, usernameAux, ';');
         getline(txt, passwordAux, ';');
+        getline(txt, role, ';');
+        getline(txt, active, ';');
 
         if(username == usernameAux && password == passwordAux){
 
-            getline(txt, role, ';');
-            getline(txt, active, ';');
-
-            user = new User(username, password, role, stoi(active));
+            if(stoi(active) == 1){
+                user = new User(username, password, role, stoi(active));
+            }
 
             encontrado = true;
         }
     }
 
-    if(encontrado){
-        string mensaje = "Bienvenido " + user->username + "!\n\n";
-        strcpy(datos, mensaje.data());
-    }else{
-        strcpy(datos, (char*)"Datos de usuario incorrectos\n\n");
+    string mensaje;
+
+    if(encontrado && stoi(active) == 1){
+        mensaje = "Bienvenido " + username + "!\n\n";
+    }
+    else if(encontrado && stoi(active) == 0){
+        mensaje = "Usuario " + username + " inactivo!\n\n";
+    }
+    else{
+        mensaje = "Datos de usuario incorrectos\n\n";
     }
 
+    strcpy(datos, mensaje.data());
+
     return user;
+}
+
+
+// la mejor función de la historia
+void serverLog(string log){
+    time_t timestamp = time(NULL);
+    struct tm datetime = *localtime(&timestamp);
+    char timeOutput[50];
+    strftime(timeOutput, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
+
+    ofstream archivo;
+    archivo.open("server.log", std::ios_base::app);
+    archivo << timeOutput << ": " + log;
+    archivo.flush();
+}
+
+
+void verRegistro(char* datos){
+    ifstream registro("server.log");
+
+    //si el archivo está vacío
+    if(registro.peek() == std::ifstream::traits_type::eof()){
+        strcpy(datos, (char*)"No hay registros\n\n");
+    }else{
+        string mensaje((std::istreambuf_iterator<char>(registro)), std::istreambuf_iterator<char>());
+        strcpy(datos, mensaje.data());
+        strcat(datos, (char*)"\n");
+    }
+
+}
+
+
+void usuarios(char* datos, User* user, Server* server){
+    int resultado;
+    strcpy(datos, (char*)"\n");
+    string comando;
+    string opciones = "----------------------------------------\n";
+    opciones += "Lista de opciones de usuarios:\n";
+    opciones += "----------------------------------------\n";
+    opciones += "-> alta\n";
+    opciones += "-> baja\n";
+    opciones += "-> volver\n";
+    opciones += "----------------------------------------\n";
+
+    do{
+        strcat(datos, opciones.data());
+
+        server->Enviar(datos);
+        ZeroMemory(datos, 1024);
+
+        resultado = server->Recibir(datos);
+        comando = datos;
+        //string mensaje;
+
+        if(comando == "alta"){
+            strcpy(datos, (char*)"alta\n");
+        }
+        else if(comando == "baja"){
+            strcpy(datos, (char*)"baja\n");
+        }
+        else if(comando == "volver"){
+            strcpy(datos, (char*)"\n");
+        }
+        else{
+            strcpy(datos, (char*)"comando invalido\n");
+        }
+    }while(resultado > 0 && comando != "volver");
 }
