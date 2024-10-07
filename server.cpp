@@ -1,151 +1,244 @@
-#undef UNICODE
-
-#define WIN32_LEAN_AND_MEAN
-
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <winsock2.h>
+#include "string.h"
+#include <ctime>
+
 using namespace std;
 
-#include <windows.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <stdlib.h>
-#include <stdio.h>
+class Server{
+public:
+    WSADATA WSAData;
+    SOCKET server, client;
+    SOCKADDR_IN serverAddr, clientAddr;
+    char buffer[1024];
 
-// Need to link with Ws2_32.lib
-#pragma comment (lib, "Ws2_32.lib")
-// #pragma comment (lib, "Mswsock.lib")
+    Server(){
+        WSAStartup(MAKEWORD(2,0), &WSAData);
+        server = socket(AF_INET, SOCK_STREAM, 0);
 
-#define DEFAULT_BUFLEN 512
-#define DEFAULT_PORT "27015"
+        serverAddr.sin_addr.s_addr = INADDR_ANY;
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(5555);
 
-///server
+        bind(server, (SOCKADDR *)&serverAddr, sizeof(serverAddr));
+        listen(server, 0);
 
-int __cdecl main(void)
-{
-    WSADATA wsaData;
-    int iResult;
+        cout << "Escuchando para conexiones entrantes." << endl;
 
-    SOCKET ListenSocket = INVALID_SOCKET;
-    SOCKET ClientSocket = INVALID_SOCKET;
-
-    struct addrinfo *result = NULL;
-    struct addrinfo hints;
-
-    int iSendResult;
-    char recvbuf[DEFAULT_BUFLEN];
-    int recvbuflen = DEFAULT_BUFLEN;
-
-    // Initialize Winsock
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
-    if (iResult != 0) {
-        printf("WSAStartup failed with error: %d\n", iResult);
-        return 1;
+        int clientAddrSize = sizeof(clientAddr);
+        if((client = accept(server, (SOCKADDR *)&clientAddr, &clientAddrSize)) != INVALID_SOCKET){
+            cout << "Cliente conectado!" << endl;
+        }
     }
 
-    ZeroMemory(&hints, sizeof(hints));
-    hints.ai_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_protocol = IPPROTO_TCP;
-    hints.ai_flags = AI_PASSIVE;
+    void Recibir(char* datos){
 
-    // Resolve the server address and port
-    iResult = getaddrinfo(NULL, DEFAULT_PORT, &hints, &result);
-    if ( iResult != 0 ) {
-        printf("getaddrinfo failed with error: %d\n", iResult);
-        WSACleanup();
-        return 1;
+        if(recv(client, buffer, sizeof(buffer), 0) > 0){
+            cout << "El cliente dice: " << buffer << endl;
+            strcpy(datos, buffer);
+        }else{
+            CerrarSocket();
+        }
+        memset(buffer, 0, sizeof(buffer));
+
     }
 
-    // Create a SOCKET for the server to listen for client connections.
-    ListenSocket = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
-    if (ListenSocket == INVALID_SOCKET) {
-        printf("socket failed with error: %d\n", WSAGetLastError());
-        freeaddrinfo(result);
-        WSACleanup();
-        return 1;
+
+    void Enviar(char* datos){
+        strcpy(buffer, datos);
+        send(client, buffer, sizeof(buffer), 0);
+        memset(buffer, 0, sizeof(buffer));
     }
 
-    // Setup the TCP listening socket
-    iResult = bind( ListenSocket, result->ai_addr, (int)result->ai_addrlen);
-    if (iResult == SOCKET_ERROR) {
-        printf("bind failed with error: %d\n", WSAGetLastError());
-        freeaddrinfo(result);
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
+    /*
+    void Enviar(){
+        cout<<"Escribe el mensaje a enviar: ";
+        cin>>this->buffer;
+        send(client, buffer, sizeof(buffer), 0);
+        memset(buffer, 0, sizeof(buffer));
+        cout << "Mensaje enviado!" << endl;
+    }
+    */
+
+    void CerrarSocket(){
+        closesocket(client);
+        cout << "Socket cerrado, cliente desconectado." << endl;
+        std::cin.ignore();
+        exit(1);
+    }
+};
+
+class User{
+public:
+    string username;
+    string password;
+    string role;
+    int active;
+
+    User(string username, string password, string role, int active){
+        this->username = username;
+        this->password = password;
+        this->role = role;
+        this->active = active;
     }
 
-    freeaddrinfo(result);
-
-    iResult = listen(ListenSocket, SOMAXCONN);
-    if (iResult == SOCKET_ERROR) {
-        printf("listen failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
+    void toString(){
+        cout << "usuario: " << this->username + " "<< this->password + " "<< this->role + " "<< this->active + " "<< endl;
     }
+};
 
-    // Accept a client socket
-    ClientSocket = accept(ListenSocket, NULL, NULL);
-    if (ClientSocket == INVALID_SOCKET) {
-        printf("accept failed with error: %d\n", WSAGetLastError());
-        closesocket(ListenSocket);
-        WSACleanup();
-        return 1;
-    }
+User* verificarUsuario(char* datos);
 
-    cout << "--------------------------------------" << endl;
-    cout << "se acaba de conectar un pibe..." << endl;
-    cout << "--------------------------------------" << endl;
 
-    // No longer need server socket
-    closesocket(ListenSocket);
 
-    // Receive until the peer shuts down the connection
-    do {
-        /*
-        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if (iResult > 0) {
-            printf("Bytes received: %d\n", iResult);
+int main(){
 
-        // Echo the buffer back to the sender
-            iSendResult = send( ClientSocket, recvbuf, iResult, 0 );
-            if (iSendResult == SOCKET_ERROR) {
-                printf("send failed with error: %d\n", WSAGetLastError());
-                closesocket(ClientSocket);
-                WSACleanup();
-                return 1;
+    Server *Servidor = new Server();
+    char datos[1024];
+    strcpy(datos, " ");
+
+
+    time_t timestamp = time(NULL);
+    struct tm datetime = *localtime(&timestamp);
+    char timeOutput[50];
+    strftime(timeOutput, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
+
+    ofstream serverLog;
+    serverLog.open("server.log", std::ios_base::app);
+    serverLog << timeOutput << ": ============================================\n";
+    serverLog << timeOutput << ": Servidor iniciado\n";
+    serverLog << timeOutput << ": ============================================\n";
+    serverLog << timeOutput << ": Socket creado. Puerto de escucha:5555\n";
+    serverLog.flush();
+    serverLog.close();
+
+
+    while(true){
+        strcat(datos, "Ingrese usuario y contrasenia separado por ;\n");
+
+        Servidor->Enviar(datos);
+        ZeroMemory(datos, 1024);
+
+        Servidor->Recibir(datos);
+
+        User *usuario = verificarUsuario(datos);
+
+        if(usuario != NULL){
+            usuario->toString();
+
+            timestamp = time(NULL);
+            //ZeroMemory(timeOutput, 50);
+            strftime(timeOutput, 50, "%m/%d/%y %I:%M:%S %p", &datetime);
+
+            serverLog.open("server.log", std::ios_base::app);
+            serverLog << timeOutput << ": Inicio de sesión -- Usuario " + usuario->username +"\n";
+            serverLog.flush();
+            serverLog.close();
+
+            ZeroMemory(datos, 1024);
+
+            string opciones = "\n----------------------------------------\n";
+            opciones += "Lista de opciones:\n";
+            opciones += "----------------------------------------\n";
+
+            if(usuario->role == "COLECCIONISTA"){
+                //strcat(datos, "-> RegistrarFigurita\n");
+                //strcat(datos, "-> Intercambio\n");
+                opciones += "-> RegistrarFigurita\n";
+                opciones += "-> Intercambio\n";
             }
-            printf("Bytes sent: %d\n", iSendResult);
-        }
-        else if (iResult == 0)
-            printf("Connection closing...\n");
-        else  {
-            printf("recv failed with error: %d\n", WSAGetLastError());
-            closesocket(ClientSocket);
-            WSACleanup();
-            return 1;
-        }
-        */
-        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if(iResult > 0){
-            cout << "el cliente dice: " << recvbuf << endl;
+
+            if(usuario->role == "ADMIN"){
+                //strcat(datos, "-> AltaUsuario\n");
+                //strcat(datos, "-> BajaUsuario\n");
+                //strcat(datos, "-> RegistroActividades\n");
+                opciones += "-> AltaUsuario\n";
+                opciones += "-> BajaUsuario\n";
+                opciones += "-> RegistroActividades\n";
+            }
+
+            //strcat(datos, "-> Salir\n");
+            //strcat(datos, "--------------------\n");
+            opciones += "-> Salir\n";
+            opciones += "----------------------------------------\n";
+
+            while(true){
+                /*
+                strcpy(datos, "--------------------\nLista de opciones:\n--------------------\n");
+
+                if(usuario->role == "COLECCIONISTA"){
+                    strcat(datos, "-> RegistrarFigurita\n");
+                    strcat(datos, "-> Intercambio\n");
+
+                }
+
+                if(usuario->role == "ADMIN"){
+                    strcat(datos, "-> AltaUsuario\n");
+                    strcat(datos, "-> BajaUsuario\n");
+                    strcat(datos, "-> RegistroActividades\n");
+
+                }
+
+                strcat(datos, "-> Salir\n");
+                strcat(datos, "--------------------\n");
+
+                Servidor->Enviar(datos);
+                */
+
+                strcat(datos, opciones.data());
+                Servidor->Enviar(datos);
+                ZeroMemory(datos, 1024);
+                Servidor->Recibir(datos);
+            }
         }
 
-    } while (/*iResult > 0*/true);
+    }
+}
 
-    // shutdown the connection since we're done
-    iResult = shutdown(ClientSocket, SD_SEND);
-    if (iResult == SOCKET_ERROR) {
-        printf("shutdown failed with error: %d\n", WSAGetLastError());
-        closesocket(ClientSocket);
-        WSACleanup();
-        return 1;
+
+User* verificarUsuario(char* datos){
+    bool encontrado = false;
+    User* user = NULL;
+
+    string username, password, role, active;
+    stringstream datosAux;
+
+    datosAux << datos;
+
+    getline(datosAux, username, ';');
+    getline(datosAux, password, ';');
+
+    fstream autenticacion("autenticacion.txt");
+
+    string usernameAux, passwordAux, linea;
+    stringstream txt;
+
+    while(getline (autenticacion, linea) && !encontrado){
+
+        txt << linea;
+
+        getline(txt, usernameAux, ';');
+        getline(txt, passwordAux, ';');
+
+        if(username == usernameAux && password == passwordAux){
+
+            getline(txt, role, ';');
+            getline(txt, active, ';');
+
+            user = new User(username, password, role, stoi(active));
+
+            encontrado = true;
+        }
     }
 
-    // cleanup
-    closesocket(ClientSocket);
-    WSACleanup();
+    if(encontrado){
+        string mensaje = "Bienvenido " + user->username + "!\n\n";
+        strcpy(datos, mensaje.data());
+    }else{
+        strcpy(datos, (char*)"Datos de usuario incorrectos\n\n");
+    }
 
-    return 0;
+    return user;
 }
