@@ -11,7 +11,7 @@ public:
     WSADATA WSAData;
     SOCKET server;
     SOCKADDR_IN addr;
-    char buffer[1024];
+    char buffer[4096];
 
     Client(){
         WSAStartup(MAKEWORD(2,0), &WSAData);

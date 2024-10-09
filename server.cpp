@@ -12,7 +12,7 @@ public:
     WSADATA WSAData;
     SOCKET server, client;
     SOCKADDR_IN serverAddr, clientAddr;
-    char buffer[1024];
+    char buffer[4096];
 
     Server(){
         WSAStartup(MAKEWORD(2,0), &WSAData);
@@ -37,7 +37,7 @@ public:
         int resultado = recv(client, buffer, sizeof(buffer), 0);
 
         if(resultado > 0){
-            cout << "El cliente dice: " << buffer << endl;
+            cout << "\nEl cliente dice: " << buffer << endl;
         }
 
         strcpy(datos, buffer);
@@ -53,16 +53,6 @@ public:
         send(client, buffer, sizeof(buffer), 0);
         memset(buffer, 0, sizeof(buffer));
     }
-
-    /*
-    void Enviar(){
-        cout<<"Escribe el mensaje a enviar: ";
-        cin>>this->buffer;
-        send(client, buffer, sizeof(buffer), 0);
-        memset(buffer, 0, sizeof(buffer));
-        cout << "Mensaje enviado!" << endl;
-    }
-    */
 
     void CerrarSocket(){
         closesocket(client);
@@ -92,46 +82,47 @@ public:
 };
 
 /// funciones
-User* verificarUsuario(char* datos);
+User* iniciarSesion(char* datos);
 void serverLog(string log);
 void verRegistro(char* datos);
-void usuarios(char* datos, User* user, Server* server);
+void usuariosMenu(char* datos, Server* server);
+void altaUsuario(char* datos);
 
 
 int main(){
     /// crear servidor
     Server *Servidor = new Server();
-    char datos[1024];
+    char datos[4096];
     strcpy(datos, "\n");
     int resultado;
+
+    //iniciar con un log vacío
+    remove("server.log");
 
     serverLog("============================================\n");
     serverLog("Servidor iniciado\n");
     serverLog("============================================\n");
     serverLog("Socket creado. Puerto de escucha:5555\n");
 
-    /// menú de inicio de sesion
+    /// menú de inicio de sesión
     do{
         strcat(datos, "Ingrese usuario y contrasenia separado por ;\n");
 
         Servidor->Enviar(datos);
-        ZeroMemory(datos, 1024);
+        ZeroMemory(datos, 4096);
 
         resultado = Servidor->Recibir(datos);
 
-        User *usuario = verificarUsuario(datos);
+        User *usuario = iniciarSesion(datos);
 
-        // si el logueo es exitoso
+        /// si el logueo es exitoso
         if(usuario != NULL){
-            //usuario->toString();
 
             serverLog("Inicio de sesion -- Usuario " + usuario->username +"\n");
 
-            //ZeroMemory(datos, 1024);
-
-            string opciones = "----------------------------------------\n";
+            string opciones = "--------------------------------------------------------------------------------\n";
             opciones += "Lista de opciones:\n";
-            opciones += "----------------------------------------\n";
+            opciones += "--------------------------------------------------------------------------------\n";
 
             if(usuario->role == "COLECCIONISTA"){
                 opciones += "-> registrar-figurita\n";
@@ -139,28 +130,28 @@ int main(){
             }
 
             if(usuario->role == "ADMIN"){
-                opciones += "-> usuarios\n";
+                opciones += "-> usuarios | usuarios alta | usuarios baja\n";
                 opciones += "-> registro\n";
             }
 
-            opciones += "-> salir\n";
-            opciones += "----------------------------------------\n";
+            opciones += "-> salir\t(iniciar sesion)\n";
+            opciones += "--------------------------------------------------------------------------------\n";
 
             string comando;
 
-            ///menú de comandos
+            ///menú principal
             do{
                 strcat(datos, opciones.data());
-                Servidor->Enviar(datos);
-                ZeroMemory(datos, 1024);
-                resultado = Servidor->Recibir(datos);
 
+                Servidor->Enviar(datos);
+                ZeroMemory(datos, 4096);
+
+                resultado = Servidor->Recibir(datos);
                 comando = datos;
 
-                string mensaje;
-
+                /// comandos
                 if(comando == "usuarios" && usuario->role == "ADMIN"){
-                    usuarios(datos, usuario, Servidor);
+                    usuariosMenu(datos, Servidor);
                 }
                 else if(comando == "registro" && usuario->role == "ADMIN"){
                     verRegistro(datos);
@@ -168,13 +159,13 @@ int main(){
                 else if(comando == "salir"){
                     serverLog("Cierre de sesion -- Usuario " + usuario->username +"\n");
 
-                    mensaje = "Adios " + usuario->username +  "!!\n\n";
+                    string mensaje = "Adios " + usuario->username +  "!!\n\n";
                     strcpy(datos, mensaje.data());
+
                     free(usuario);
                 }
                 else{
-                    mensaje = "Comando invalido!\n\n";
-                    strcpy(datos, mensaje.data());
+                    strcpy(datos, (char*)"Comando invalido!\n\n");
                 }
 
             }while(comando != "salir" && resultado > 0);
@@ -192,7 +183,7 @@ int main(){
 }
 
 
-User* verificarUsuario(char* datos){
+User* iniciarSesion(char* datos){
     bool encontrado = false;
     User* user = NULL;
 
@@ -204,7 +195,7 @@ User* verificarUsuario(char* datos){
     getline(datosAux, username, ';');
     getline(datosAux, password, ';');
 
-    fstream autenticacion("autenticacion.txt");
+    ifstream autenticacion("autenticacion.txt");
 
     string usernameAux, passwordAux, linea;
     stringstream txt;
@@ -215,10 +206,11 @@ User* verificarUsuario(char* datos){
 
         getline(txt, usernameAux, ';');
         getline(txt, passwordAux, ';');
-        getline(txt, role, ';');
-        getline(txt, active, ';');
 
         if(username == usernameAux && password == passwordAux){
+
+            getline(txt, role, ';');
+            getline(txt, active, ';');
 
             if(stoi(active) == 1){
                 user = new User(username, password, role, stoi(active));
@@ -226,6 +218,8 @@ User* verificarUsuario(char* datos){
 
             encontrado = true;
         }
+
+        txt.str("");
     }
 
     string mensaje;
@@ -275,31 +269,64 @@ void verRegistro(char* datos){
 }
 
 
-void usuarios(char* datos, User* user, Server* server){
+void usuariosMenu(char* datos, Server* server){
     int resultado;
     strcpy(datos, (char*)"\n");
     string comando;
-    string opciones = "----------------------------------------\n";
-    opciones += "Lista de opciones de usuarios:\n";
-    opciones += "----------------------------------------\n";
+
+    string opciones = "--------------------------------------------------------------------------------\n";
+    opciones += "Opciones de usuarios:\n";
+    opciones += "--------------------------------------------------------------------------------\n";
     opciones += "-> alta\n";
     opciones += "-> baja\n";
-    opciones += "-> volver\n";
-    opciones += "----------------------------------------\n";
+    opciones += "-> volver\t(menu principal)\n";
+    opciones += "--------------------------------------------------------------------------------\n";
+
+    string opcionesAlta = "--------------------------------------------------------------------------------\n";
+    opcionesAlta += "Opciones alta de usuarios:\n";
+    opcionesAlta += "--------------------------------------------------------------------------------\n";
+    opcionesAlta += "-> ingresar datos de la siguiente manera: nombre;contrasenia\n";
+    opcionesAlta += "-> volver\t(menu principal)\n";
+    opcionesAlta += "--------------------------------------------------------------------------------\n";
+
+    string opcionesBaja = "--------------------------------------------------------------------------------\n";
+    opcionesBaja += "Opciones de baja de usuarios:\n";
+    opcionesBaja += "--------------------------------------------------------------------------------\n";
+    opcionesBaja += "-> nombre del usuario\n";
+    opcionesBaja += "-> volver\n";
+    opcionesBaja += "--------------------------------------------------------------------------------\n";
 
     do{
         strcat(datos, opciones.data());
 
         server->Enviar(datos);
-        ZeroMemory(datos, 1024);
+        ZeroMemory(datos, 4096);
 
         resultado = server->Recibir(datos);
         comando = datos;
         //string mensaje;
 
+        /// menú de alta usuarios
         if(comando == "alta"){
-            strcpy(datos, (char*)"alta\n");
+
+            strcpy(datos, opcionesAlta.data());
+
+            server->Enviar(datos);
+            ZeroMemory(datos, 4096);
+
+            resultado = server->Recibir(datos);
+            comando = datos;
+
+            if(comando != "volver"){
+                altaUsuario(datos);
+                comando = "volver";
+            }else{
+                strcpy(datos, (char*)"\n");
+            }
         }
+
+
+        /// menú de baja usuarios
         else if(comando == "baja"){
             strcpy(datos, (char*)"baja\n");
         }
@@ -310,4 +337,61 @@ void usuarios(char* datos, User* user, Server* server){
             strcpy(datos, (char*)"comando invalido\n");
         }
     }while(resultado > 0 && comando != "volver");
+}
+
+void altaUsuario(char* datos){
+
+    // extraigo los datos
+    string username, password;
+    stringstream datosAux;
+
+    datosAux << datos;
+
+    getline(datosAux, username, ';');
+    getline(datosAux, password, ';');
+
+    // los datos no pueden ser vacios
+
+    if(username.empty() || password.empty()){
+        strcpy(datos, (char*)"Error al dar de alta el nuevo usuario: datos incompletos.\n\n");
+        return;
+    }
+
+    // el usuario no tiene que estar registrado
+
+    bool encontrado = false;
+
+    fstream autenticacion("autenticacion.txt");
+
+    string usernameAux, linea;
+    stringstream txt;
+
+    while(getline(autenticacion, linea) && !encontrado){
+        txt << linea;
+
+        getline(txt, usernameAux, ';');
+        txt.str("");
+
+        if(usernameAux == username){
+            encontrado = true;
+        }
+
+    }
+
+    autenticacion.close();
+
+    if(encontrado){
+        strcpy(datos, (char*)"Error al dar de alta el nuevo usuario: usuario existente.\n\n");
+        return;
+    }
+
+    // guarda los datos
+
+    autenticacion.open("autenticacion.txt",std::ios_base::app);
+    autenticacion << username + ";" + password + ";COLECCIONISTA;1;\n";
+    autenticacion.flush();
+    autenticacion.close();
+
+    string mensaje = "Usuario " + username + " registrado correctamente!\n\n";
+    strcpy(datos, mensaje.data());
 }
