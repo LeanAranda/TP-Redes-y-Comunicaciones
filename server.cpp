@@ -87,6 +87,8 @@ void serverLog(string log);
 void verRegistro(char* datos);
 void usuariosMenu(char* datos, Server* server);
 void altaUsuario(char* datos);
+void registrarFiguritaMenu(char * datos, Server * server, User * user);
+void registrarFigurita(char * datos, User * user);
 
 
 int main(){
@@ -121,12 +123,12 @@ int main(){
             serverLog("Inicio de sesion -- Usuario " + usuario->username +"\n");
 
             string opciones = "--------------------------------------------------------------------------------\n";
-            opciones += "Lista de opciones:\n";
+            opciones += "Lista de opciones " + usuario->role + ":\n";
             opciones += "--------------------------------------------------------------------------------\n";
 
             if(usuario->role == "COLECCIONISTA"){
-                opciones += "-> registrar-figurita\n";
-                opciones += "-> intercambio\n";
+                opciones += "-> registrar_figurita\n";
+                opciones += "-> intercambio | intercambio peticion | intercambio cancelacion\n";
             }
 
             if(usuario->role == "ADMIN"){
@@ -150,7 +152,10 @@ int main(){
                 comando = datos;
 
                 /// comandos
-                if(comando == "usuarios" && usuario->role == "ADMIN"){
+                if(comando == "registrar_figurita" && usuario->role == "COLECCIONISTA"){
+                    registrarFiguritaMenu(datos, Servidor, usuario);
+                }
+                else if(comando == "usuarios" && usuario->role == "ADMIN"){
                     usuariosMenu(datos, Servidor);
                 }
                 else if(comando == "registro" && usuario->role == "ADMIN"){
@@ -159,7 +164,7 @@ int main(){
                 else if(comando == "salir"){
                     serverLog("Cierre de sesion -- Usuario " + usuario->username +"\n");
 
-                    string mensaje = "Adios " + usuario->username +  "!!\n\n";
+                    string mensaje = "Chau " + usuario->username +  "!!\n\n";
                     strcpy(datos, mensaje.data());
 
                     free(usuario);
@@ -283,14 +288,14 @@ void usuariosMenu(char* datos, Server* server){
     opciones += "--------------------------------------------------------------------------------\n";
 
     string opcionesAlta = "--------------------------------------------------------------------------------\n";
-    opcionesAlta += "Opciones alta de usuarios:\n";
+    opcionesAlta += "Alta de usuarios:\n";
     opcionesAlta += "--------------------------------------------------------------------------------\n";
     opcionesAlta += "-> ingresar datos de la siguiente manera: nombre;contrasenia\n";
     opcionesAlta += "-> volver\t(menu principal)\n";
     opcionesAlta += "--------------------------------------------------------------------------------\n";
 
     string opcionesBaja = "--------------------------------------------------------------------------------\n";
-    opcionesBaja += "Opciones de baja de usuarios:\n";
+    opcionesBaja += "Baja de usuarios:\n";
     opcionesBaja += "--------------------------------------------------------------------------------\n";
     opcionesBaja += "-> nombre del usuario\n";
     opcionesBaja += "-> volver\n";
@@ -385,7 +390,7 @@ void altaUsuario(char* datos){
         return;
     }
 
-    // guarda los datos
+    // guardar los datos
 
     autenticacion.open("autenticacion.txt",std::ios_base::app);
     autenticacion << username + ";" + password + ";COLECCIONISTA;1;\n";
@@ -393,5 +398,110 @@ void altaUsuario(char* datos){
     autenticacion.close();
 
     string mensaje = "Usuario " + username + " registrado correctamente!\n\n";
+    strcpy(datos, mensaje.data());
+}
+
+void registrarFiguritaMenu(char * datos, Server * server, User * user){
+
+    int resultado;
+    string comando;
+
+    string opciones = "--------------------------------------------------------------------------------\n";
+    opciones += "Registrar figurita:\n";
+    opciones += "--------------------------------------------------------------------------------\n";
+    opciones += "-> ingresar datos de la siguiente manera: pais;jugador\n";
+    opciones += "-> volver\t(menu principal)\n";
+    opciones += "--------------------------------------------------------------------------------\n";
+
+    strcpy(datos, (char*)"\n");
+
+    do{
+        strcat(datos, opciones.data());
+
+        server->Enviar(datos);
+        ZeroMemory(datos, 4096);
+
+        resultado = server->Recibir(datos);
+        comando = datos;
+
+        if(comando != "volver"){
+            registrarFigurita(datos, user);
+            comando = "volver";
+        }else{
+            strcpy(datos, (char*)"\n");
+        }
+    }while(resultado > 0 && comando != "volver");
+}
+
+void registrarFigurita(char * datos, User * user){
+
+    cout << datos <<endl;
+
+    // extraigo los datos
+    string pais, jugador;
+    stringstream datosAux;
+
+    datosAux << datos;
+
+    getline(datosAux, pais, ';');
+    getline(datosAux, jugador, ';');
+
+    cout << pais << endl;
+    cout << jugador << endl;
+
+    // los datos no pueden ser vacios
+    if(pais.empty() || jugador.empty()){
+        strcpy(datos, (char*)"Error al registrar figurita: datos incompletos.\n\n");
+        return;
+    }
+
+    // el pais tiene que existir
+    bool encontrado = false;
+
+    ifstream paises("paises.txt");
+    string linea;
+
+    while(getline(paises, linea) && !encontrado){
+
+        //cout << linea << endl;
+        /*
+        if(paisAux == pais){
+            encontrado = true;
+        }
+        */
+
+        cout << pais + " " + linea << endl;
+
+        if(linea.find(pais) != string::npos){
+            encontrado = true;
+        }
+
+        linea = "";
+    }
+
+    paises.close();
+
+    if(!encontrado){
+        strcpy(datos, (char*)"Error al registrar figurita: el pais no existe.\n\n");
+        return;
+    }
+
+    // guardar los datos
+    int id = 1;
+
+    fstream figuritas("figuritas.txt");
+
+    while(getline(figuritas, linea)){
+        id++;
+    }
+
+    figuritas.close();
+
+    figuritas.open("figuritas.txt", std::ios_base::app);
+    figuritas << id << ";" + user->username + ";" + pais + ";" + jugador + ";1;\n";
+    figuritas.flush();
+    figuritas.close();
+
+    string mensaje = "Figurita registrada correctamente!\n\n";
     strcpy(datos, mensaje.data());
 }
