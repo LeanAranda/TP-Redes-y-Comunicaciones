@@ -89,6 +89,7 @@ void usuariosMenu(char* datos, Server* server);
 void altaUsuario(char* datos);
 void registrarFiguritaMenu(char * datos, Server * server, User * user);
 void registrarFigurita(char * datos, User * user);
+void paisesRegistrados(char * datos);
 
 
 int main(){
@@ -128,15 +129,16 @@ int main(){
 
             if(usuario->role == "COLECCIONISTA"){
                 opciones += "-> registrar_figurita\n";
-                opciones += "-> intercambio | intercambio peticion | intercambio cancelacion\n";
+                opciones += "-> intercambio\n";
+                opciones += "-> paises_registrados\n";
             }
 
             if(usuario->role == "ADMIN"){
-                opciones += "-> usuarios | usuarios alta | usuarios baja\n";
+                opciones += "-> usuarios\n";
                 opciones += "-> registro\n";
             }
 
-            opciones += "-> salir\t(iniciar sesion)\n";
+            opciones += "-> salir\n";
             opciones += "--------------------------------------------------------------------------------\n";
 
             string comando;
@@ -154,6 +156,9 @@ int main(){
                 /// comandos
                 if(comando == "registrar_figurita" && usuario->role == "COLECCIONISTA"){
                     registrarFiguritaMenu(datos, Servidor, usuario);
+                }
+                else if(comando == "paises_registrados" && usuario->role == "COLECCIONISTA"){
+                    paisesRegistrados(datos);
                 }
                 else if(comando == "usuarios" && usuario->role == "ADMIN"){
                     usuariosMenu(datos, Servidor);
@@ -284,14 +289,14 @@ void usuariosMenu(char* datos, Server* server){
     opciones += "--------------------------------------------------------------------------------\n";
     opciones += "-> alta\n";
     opciones += "-> baja\n";
-    opciones += "-> volver\t(menu principal)\n";
+    opciones += "-> volver\n(menu principal)\n";
     opciones += "--------------------------------------------------------------------------------\n";
 
     string opcionesAlta = "--------------------------------------------------------------------------------\n";
     opcionesAlta += "Alta de usuarios:\n";
     opcionesAlta += "--------------------------------------------------------------------------------\n";
     opcionesAlta += "-> ingresar datos de la siguiente manera: nombre;contrasenia\n";
-    opcionesAlta += "-> volver\t(menu principal)\n";
+    opcionesAlta += "-> volver\n(menu principal)\n";
     opcionesAlta += "--------------------------------------------------------------------------------\n";
 
     string opcionesBaja = "--------------------------------------------------------------------------------\n";
@@ -408,9 +413,9 @@ void registrarFiguritaMenu(char * datos, Server * server, User * user){
 
     string opciones = "--------------------------------------------------------------------------------\n";
     opciones += "Registrar figurita:\n";
-    opciones += "--------------------------------------------------------------------------------\n";
-    opciones += "-> ingresar datos de la siguiente manera: pais;jugador\n";
-    opciones += "-> volver\t(menu principal)\n";
+    opciones += "--------------------------------------------------------------------------------\n\n";
+    opciones += "-> ingresar datos de la siguiente manera: pais;jugador\n(El nombre del pais debe empezar con mayuscula!)\n\n";
+    opciones += "-> volver\n(menu principal)\n\n";
     opciones += "--------------------------------------------------------------------------------\n";
 
     strcpy(datos, (char*)"\n");
@@ -446,9 +451,6 @@ void registrarFigurita(char * datos, User * user){
     getline(datosAux, pais, ';');
     getline(datosAux, jugador, ';');
 
-    cout << pais << endl;
-    cout << jugador << endl;
-
     // los datos no pueden ser vacios
     if(pais.empty() || jugador.empty()){
         strcpy(datos, (char*)"Error al registrar figurita: datos incompletos.\n\n");
@@ -463,16 +465,7 @@ void registrarFigurita(char * datos, User * user){
 
     while(getline(paises, linea) && !encontrado){
 
-        //cout << linea << endl;
-        /*
-        if(paisAux == pais){
-            encontrado = true;
-        }
-        */
-
-        cout << pais + " " + linea << endl;
-
-        if(linea.find(pais) != string::npos){
+        if(linea == pais){
             encontrado = true;
         }
 
@@ -482,7 +475,7 @@ void registrarFigurita(char * datos, User * user){
     paises.close();
 
     if(!encontrado){
-        strcpy(datos, (char*)"Error al registrar figurita: el pais no existe.\n\n");
+        strcpy(datos, (char*)"Error al registrar figurita: el pais ingresado no esta en la lista de paises registrados.\nLa lista puede verse en la opcion paises_registrados.\n\n");
         return;
     }
 
@@ -503,5 +496,23 @@ void registrarFigurita(char * datos, User * user){
     figuritas.close();
 
     string mensaje = "Figurita registrada correctamente!\n\n";
+    strcpy(datos, mensaje.data());
+}
+
+void paisesRegistrados(char * datos){
+    string mensaje = "--------------------------------------------------------------------------------\n";
+    mensaje += "Lista de paises registrados para las figuritas\n";
+    mensaje += "--------------------------------------------------------------------------------\n";
+
+    ifstream paises("paises.txt");
+    string linea;
+
+    while(getline(paises, linea)){
+        mensaje += linea + "\n";
+        linea = "";
+    }
+
+    mensaje += "--------------------------------------------------------------------------------\n\n";
+
     strcpy(datos, mensaje.data());
 }
