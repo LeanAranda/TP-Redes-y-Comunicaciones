@@ -1,11 +1,10 @@
-10/13/24 08:08:56 PM: ============================================
-10/13/24 08:08:56 PM: Servidor iniciado
-10/13/24 08:08:56 PM: ============================================
-10/13/24 08:08:56 PM: Socket creado. Puerto de escucha:5555
-10/13/24 08:08:59 PM: Inicio de sesion -- Usuario leo
-10/13/24 08:09:29 PM: Cierre de sesion -- Usuario leo
-10/13/24 08:09:32 PM: Inicio de sesion -- Usuario queso
-10/13/24 08:10:46 PM: Cierre de sesion -- Usuario queso
-10/13/24 08:10:48 PM: ============================================
-10/13/24 08:10:48 PM: Cerrando servidor y socket...
-10/13/24 08:10:48 PM: ============================================
+10/18/24 09:45:56 PM: ============================================
+10/18/24 09:45:56 PM: Servidor iniciado
+10/18/24 09:45:56 PM: ============================================
+10/18/24 09:45:56 PM: Socket creado. Puerto de escucha:5555
+10/18/24 09:47:10 PM: Inicio de sesion -- Usuario queso
+10/18/24 09:47:34 PM: Cierre de sesion -- Usuario queso
+10/18/24 09:47:51 PM: Inicio de sesion -- Usuario juan
+10/18/24 10:02:27 PM: ============================================
+10/18/24 10:02:27 PM: Cerrando servidor y socket...
+10/18/24 10:02:27 PM: ============================================

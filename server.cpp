@@ -7,6 +7,8 @@
 
 using namespace std;
 
+/// clases
+
 class Server{
 public:
     WSADATA WSAData;
@@ -81,7 +83,25 @@ public:
     }
 };
 
+class Figurita{
+public:
+    int id;
+    string usuario;
+    string pais;
+    string jugador;
+    string disponible;
+
+    Figurita(int id, string usuario, string pais, string jugador, string disponible){
+        this->id = id;
+        this->usuario = usuario;
+        this->pais = pais;
+        this->jugador = jugador;
+        this->disponible = disponible;
+    }
+};
+
 /// funciones
+
 User* iniciarSesion(char* datos);
 void serverLog(string log);
 void verRegistro(char* datos);
@@ -89,7 +109,15 @@ void usuariosMenu(char* datos, Server* server);
 void altaUsuario(char* datos);
 void registrarFiguritaMenu(char * datos, Server * server, User * user);
 void registrarFigurita(char * datos, User * user);
+bool existePais(string pais);
 void paisesRegistrados(char * datos);
+Figurita* buscarFigurita(string usuario, string pais, string jugador);
+int listadoFiguritas(User* user, char* datos);
+void menuIntercambio(Server* server, User* user, char* datos);
+bool validarDatosPeticion(User* user, char*datos);
+void crearPeticion(User* user, char*datos);
+void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2);
+void peticionRealizada(string peticion);
 
 
 int main(){
@@ -128,9 +156,9 @@ int main(){
             opciones += "--------------------------------------------------------------------------------\n";
 
             if(usuario->role == "COLECCIONISTA"){
-                opciones += "-> registrar_figurita\n";
+                opciones += "-> registrar\n";
                 opciones += "-> intercambio\n";
-                opciones += "-> paises_registrados\n";
+                opciones += "-> paises\n";
             }
 
             if(usuario->role == "ADMIN"){
@@ -154,10 +182,14 @@ int main(){
                 comando = datos;
 
                 /// comandos
-                if(comando == "registrar_figurita" && usuario->role == "COLECCIONISTA"){
+                if(comando == "registrar" && usuario->role == "COLECCIONISTA"){
                     registrarFiguritaMenu(datos, Servidor, usuario);
                 }
-                else if(comando == "paises_registrados" && usuario->role == "COLECCIONISTA"){
+                else if(comando == "intercambio" && usuario->role == "COLECCIONISTA"){
+                    //listadoFiguritas(usuario, datos);
+                    menuIntercambio(Servidor, usuario, datos);
+                }
+                else if(comando == "paises" && usuario->role == "COLECCIONISTA"){
                     paisesRegistrados(datos);
                 }
                 else if(comando == "usuarios" && usuario->role == "ADMIN"){
@@ -339,6 +371,15 @@ void usuariosMenu(char* datos, Server* server){
         /// menú de baja usuarios
         else if(comando == "baja"){
             strcpy(datos, (char*)"baja\n");
+            Figurita * fig = buscarFigurita("queso", "argentina", "messi");
+            if(fig != NULL){
+                cout << "\nFIGURITA:\n";
+                cout << fig->id << ", ";
+                cout << fig->usuario << ", ";
+                cout << fig->pais << ", ";
+                cout << fig->jugador << ", ";
+                cout << fig->disponible << endl;
+            }
         }
         else if(comando == "volver"){
             strcpy(datos, (char*)"\n");
@@ -414,8 +455,8 @@ void registrarFiguritaMenu(char * datos, Server * server, User * user){
     string opciones = "--------------------------------------------------------------------------------\n";
     opciones += "Registrar figurita:\n";
     opciones += "--------------------------------------------------------------------------------\n\n";
-    opciones += "-> ingresar datos de la siguiente manera: pais;jugador\n(El nombre del pais debe empezar con mayuscula!)\n\n";
-    opciones += "-> volver\n(menu principal)\n\n";
+    opciones += "-> ingresar datos de la siguiente manera: pais;jugador\n\n";
+    opciones += "-> volver\n\n";
     opciones += "--------------------------------------------------------------------------------\n";
 
     strcpy(datos, (char*)"\n");
@@ -440,7 +481,7 @@ void registrarFiguritaMenu(char * datos, Server * server, User * user){
 
 void registrarFigurita(char * datos, User * user){
 
-    cout << datos <<endl;
+    //cout << datos <<endl;
 
     // extraigo los datos
     string pais, jugador;
@@ -458,24 +499,9 @@ void registrarFigurita(char * datos, User * user){
     }
 
     // el pais tiene que existir
-    bool encontrado = false;
 
-    ifstream paises("paises.txt");
-    string linea;
-
-    while(getline(paises, linea) && !encontrado){
-
-        if(linea == pais){
-            encontrado = true;
-        }
-
-        linea = "";
-    }
-
-    paises.close();
-
-    if(!encontrado){
-        strcpy(datos, (char*)"Error al registrar figurita: el pais ingresado no esta en la lista de paises registrados.\nLa lista puede verse en la opcion paises_registrados.\n\n");
+    if(!existePais(pais)){
+        strcpy(datos, (char*)"Error al registrar figurita: el pais ingresado no esta en la lista de paises registrados.\nLa lista puede verse con la opcion paises.\n\n");
         return;
     }
 
@@ -483,6 +509,7 @@ void registrarFigurita(char * datos, User * user){
     int id = 1;
 
     fstream figuritas("figuritas.txt");
+    string linea;
 
     while(getline(figuritas, linea)){
         id++;
@@ -499,6 +526,26 @@ void registrarFigurita(char * datos, User * user){
     strcpy(datos, mensaje.data());
 }
 
+bool existePais(string pais){
+    bool existe = false;
+
+    ifstream paises("paises.txt");
+    string linea;
+
+    while(getline(paises, linea) && !existe){
+
+        if(linea == pais){
+            existe = true;
+        }
+
+        linea = "";
+    }
+
+    paises.close();
+
+    return existe;
+}
+
 void paisesRegistrados(char * datos){
     string mensaje = "--------------------------------------------------------------------------------\n";
     mensaje += "Lista de paises registrados para las figuritas\n";
@@ -512,7 +559,355 @@ void paisesRegistrados(char * datos){
         linea = "";
     }
 
-    mensaje += "--------------------------------------------------------------------------------\n\n";
+    //mensaje += "--------------------------------------------------------------------------------\n\n";
 
     strcpy(datos, mensaje.data());
 }
+
+
+Figurita* buscarFigurita(string usuario, string pais, string jugador){
+    ifstream figuritas("figuritas.txt");
+    Figurita * resultado = NULL;
+    bool encontrado = false;
+    string linea;
+
+    while(getline(figuritas, linea) && !encontrado){
+        stringstream datos;
+        string id, usuarioAux, paisAux, jugadorAux, disponible;
+        datos << linea;
+
+        getline(datos, id, ';');
+        getline(datos, usuarioAux, ';');
+        getline(datos, paisAux, ';');
+        getline(datos, jugadorAux, ';');
+        getline(datos, disponible, ';');
+
+        if(usuario == usuarioAux && pais == paisAux && jugador == jugadorAux && disponible == "1"){
+            resultado = new Figurita(stoi(id), usuarioAux, paisAux, jugadorAux, disponible);
+            encontrado = true;
+        }
+
+        linea = "";
+    }
+
+    return resultado;
+}
+
+int listadoFiguritas(User* user, char* datos){
+    ifstream figuritas("figuritas.txt");
+    int cant = 0;
+    string linea;
+    string listado = "";
+    string mensaje = "--------------------------------------------------------------------------------\n";
+
+    while(getline(figuritas, linea)){
+        stringstream datos;
+        string id, usuario, pais, jugador, disponible;
+        datos << linea;
+
+        getline(datos, id, ';');
+        getline(datos, usuario, ';');
+        getline(datos, pais, ';');
+        getline(datos, jugador, ';');
+        getline(datos, disponible, ';');
+
+        if(usuario == user->username && disponible == "1"){
+            listado+= "* " + pais + ";" + jugador + "\n";
+            cant++;
+        }
+
+        linea = "";
+    }
+
+    if(cant > 0){
+        mensaje += "Figuritas disponibles para intercambiar: " + std::to_string(cant) + "\n\n";
+        mensaje += listado;
+    }else{
+        mensaje += "No hay figuritas disponibles para intercambiar\n";
+    }
+
+    mensaje += "--------------------------------------------------------------------------------\n";
+
+    strcpy(datos, mensaje.data());
+
+    return cant;
+}
+
+void menuIntercambio(Server* server, User* user, char* datos){
+    int resultado;
+    string comando;
+
+    string opciones = "--------------------------------------------------------------------------------\n";
+    opciones += "Intercambio:\n";
+    opciones += "--------------------------------------------------------------------------------\n\n";
+    opciones += "-> peticion\n\n";
+    opciones += "-> cancelacion\n\n";
+    opciones += "-> volver\n\n";
+    opciones += "--------------------------------------------------------------------------------\n";
+
+    string opcionesPeticion = "--------------------------------------------------------------------------------\n";
+    opcionesPeticion += "Peticion:\n";
+    opcionesPeticion += "--------------------------------------------------------------------------------\n\n";
+    opcionesPeticion += "-> ingresar datos: paisOf;jugadorOf;paisReq;jugadorReq\n\n";
+    opcionesPeticion += "-> volver\n\n";
+    opcionesPeticion += "--------------------------------------------------------------------------------\n";
+
+    strcpy(datos, (char*)"\n");
+
+    do{
+        strcat(datos, opciones.data());
+
+        server->Enviar(datos);
+        ZeroMemory(datos, 4096);
+
+        resultado = server->Recibir(datos);
+        comando = datos;
+
+        if(comando == "peticion"){
+
+            if(listadoFiguritas(user, datos) > 0){
+                strcat(datos, opcionesPeticion.data());
+                server->Enviar(datos);
+                ZeroMemory(datos, 4096);
+
+                resultado = server->Recibir(datos);
+
+                if(validarDatosPeticion(user, datos)){
+                    crearPeticion(user, datos);
+                }
+                //strcpy(datos, (char*)"Peticion creada\n\n");
+            }
+            comando = "volver";
+        }
+        else if(comando == "cancelacion"){
+            strcpy(datos, (char*)"cancelada crack\n\n");
+            comando = "volver";
+        }
+        else if(comando == "volver"){
+            strcpy(datos, (char*)"\n");
+        }
+        else{
+            strcpy(datos, (char*)"comando invalido\n");
+        }
+    }while(resultado > 0 && comando != "volver");
+}
+
+bool validarDatosPeticion(User* user, char*datos){
+    string paisOf, jugadorOf, paisReq, jugadorReq;
+    string error = "Error al crear la peticion de intercambio:\n";
+    bool valido = true;
+    stringstream datosAux;
+
+    // extraer datos
+    datosAux << datos;
+
+    getline(datosAux, paisOf, ';');
+    getline(datosAux, jugadorOf, ';');
+    getline(datosAux, paisReq, ';');
+    getline(datosAux, jugadorReq, ';');
+
+    // validar datos completos
+
+    if(paisOf.empty() || jugadorOf.empty() || paisReq.empty() || jugadorReq.empty()){
+        error+= "Datos incompletos.\n";
+        valido = false;
+    }
+
+    if(paisOf.empty()){
+        error+= "Falta pais ofrecido.\n";
+    }
+    if(jugadorOf.empty()){
+        error+= "Falta jugador ofrecido.\n";
+    }
+    if(paisReq.empty()){
+        error+= "Falta pais requerido.\n";
+    }
+    if(jugadorReq.empty()){
+        error+= "Falta jugador requerido.\n";
+    }
+
+    // validar figurita ofrecida
+
+    Figurita * figuritaOf = buscarFigurita(user->username, paisOf, jugadorOf);
+
+    if(figuritaOf == NULL){
+        error+= "La figurita ofrecida no pertenece a " + user->username + "\n";
+        valido = false;
+    }
+
+    // validar figurita requerida
+
+    if(!existePais(paisReq)){
+        error+= "El pais de la figurita requerida no esta registrado\n";
+        valido = false;
+    }
+
+    // peticion duplicada
+
+    // tira el error
+
+    if(!valido){
+        strcpy(datos, error.data());
+    }
+
+    return valido;
+}
+
+void crearPeticion(User* user, char*datos){
+
+    string paisOf, jugadorOf, paisReq, jugadorReq, linea, mensaje;
+    stringstream datosAux;
+
+    // extraer datos
+
+    datosAux << datos;
+
+    getline(datosAux, paisOf, ';');
+    getline(datosAux, jugadorOf, ';');
+    getline(datosAux, paisReq, ';');
+    getline(datosAux, jugadorReq, ';');
+
+    // verifico peticion duplicada
+
+    bool duplicada = false;
+    fstream peticiones("peticiones.txt");
+
+    string peticionAux = user->username + ";" + paisOf + ";" + jugadorOf + ";" + paisReq + ";" + jugadorReq + ";";
+
+    while(getline(peticiones, linea) && !duplicada){
+        if(linea == peticionAux + "PENDIENTE;"){
+            duplicada = true;
+        }
+
+        linea = "";
+    }
+
+    if(duplicada){
+        strcpy(datos, (char *)"Error al crear la peticion: PETICION DUPLICADA\n\n");
+        return;
+    }
+
+    peticiones.close();
+
+    // busco emparejamiento
+
+    string emparejamientoAux= paisReq + ";" + jugadorReq + ";" + paisOf + ";" + jugadorOf + ";PENDIENTE;";
+    string usuarioEmparejamiento;
+    bool emparejado = false;
+
+    peticiones.open("peticiones.txt");
+
+
+    while(getline(peticiones, linea) && !emparejado){
+
+        if(linea.find(emparejamientoAux) != std::string::npos){
+
+            stringstream lineaAux;
+            lineaAux << linea;
+            getline(lineaAux, usuarioEmparejamiento, ';');
+
+            // si el usuario es distinto al que hizo la peticion y si el emparejado aun posee la figurita
+            if(usuarioEmparejamiento != user->username && buscarFigurita(usuarioEmparejamiento, paisReq, jugadorReq) != NULL){
+                emparejado = true;
+            }
+        }
+
+        linea = "";
+    }
+
+    peticiones.close();
+
+
+    // realizar el intercambio y marcar como realizada la peticion emparejada
+
+    if(emparejado){
+        Figurita * f1 = buscarFigurita(user->username, paisOf, jugadorOf);
+        Figurita * f2 = buscarFigurita(usuarioEmparejamiento, paisReq, jugadorReq);
+
+        intercambiarFiguritas(f1, f2);
+
+        emparejamientoAux= usuarioEmparejamiento + ";" + emparejamientoAux;
+        peticionRealizada(emparejamientoAux);
+    }
+
+
+    // guardar la nueva peticion
+
+    strcpy(datos, (char*)"Nueva peticion creada correctamente\n");
+    peticiones.open("peticiones.txt", std::ios_base::app);
+
+    if(emparejado){
+        peticiones << peticionAux << "REALIZADA;\n";
+        strcat(datos, (char*)"Intercambio realizado!!\n\n");
+    }else{
+        peticiones << peticionAux << "PENDIENTE;\n";
+        strcat(datos, (char*)"Su peticion se encuentra en estado pendiente\n\n");
+    }
+
+}
+
+void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2){
+    ifstream original("figuritas.txt");
+    fstream copia("figuritasCopia.txt", std::ios_base::app);
+    string linea;
+
+    while(original >> linea){
+
+        stringstream lineaAux;
+        lineaAux << linea;
+        string id;
+
+        getline(lineaAux, id, ';');
+
+        if(stoi(id) == figurita1->id){
+            linea = id + ";" + figurita2->usuario + ";" + figurita1->pais + ";" + figurita1->jugador + ";" + figurita1->disponible + ";";
+        }
+
+        if(stoi(id) == figurita2->id){
+            linea = id + ";" + figurita1->usuario + ";" + figurita2->pais + ";" + figurita2->jugador + ";" + figurita2->disponible + ";";
+        }
+
+        copia << linea << "\n";
+
+        linea = "";
+    }
+
+    original.close();
+    copia.close();
+
+    remove("figuritas.txt");
+    rename("figuritasCopia.txt", "figuritas.txt");
+}
+
+void peticionRealizada(string peticion){
+    ifstream original("peticiones.txt");
+    fstream copia("peticionesCopia.txt", std::ios_base::app);
+    string linea;
+
+    while(original >> linea){
+
+        if(linea == peticion){
+            string palabra;
+            stringstream lineaAux;
+            lineaAux << linea;
+            linea = "";
+
+            getline(lineaAux, palabra, ';');
+
+            while(palabra != "PENDIENTE"){
+                linea += palabra + ";";
+                getline(lineaAux, palabra, ';');
+            };
+
+            linea += "REALIZADA;";
+        }
+
+        copia << linea << "\n";
+    }
+
+    original.close();
+    copia.close();
+
+    remove("peticiones.txt");
+    rename("peticionesCopia.txt", "peticiones.txt");
+};

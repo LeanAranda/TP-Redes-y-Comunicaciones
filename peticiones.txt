@@ -1,0 +1,11 @@
+queso;argentina;messi;peru;paloma;PENDIENTE;
+random;israel;milei;portugal;cristiano;REALIZADA;
+queso;portugal;cristiano;israel;milei;REALIZADA;
+queso;portugal;cristiano;israel;milei;REALIZADA;
+queso;portugal;cristiano;israel;milei;REALIZADA;
+random;peru;paloma;francia;mbappe;REALIZADA;
+juan;italia;mario;argentina;messi;REALIZADA;
+juan;francia;mbappe;peru;paloma;REALIZADA;
+juan;italia;mario;brasil;neymar;PENDIENTE;
+queso;argentina;messi;italia;mario;REALIZADA;
+queso;brasil;neymar;italia;mario;PENDIENTE;
