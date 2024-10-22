@@ -25,7 +25,7 @@ public:
         int resultado =  connect(server, (SOCKADDR *)&addr, sizeof(addr));
 
         if(resultado != 0){
-            cout << "Error: ip o puerto incorrectos" << endl;
+            cout << "Error: ip o puerto incorrectos\n" << endl;
         }else{
             cout << "Conectado al Servidor!" << endl;
         }
@@ -72,6 +72,8 @@ int main(){
         cin >> ip;
         cout<<"Ingrese puerto: ";
         cin >> port;
+
+        system("cls");
 
     }while( Cliente->conectar(ip, port) != 0 );
     */
