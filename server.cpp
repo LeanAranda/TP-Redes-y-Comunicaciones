@@ -7,7 +7,11 @@
 
 using namespace std;
 
-/// clases
+
+
+/// ---------------------------------------- Clases ----------------------------------------
+
+
 
 class Server{
 public:
@@ -33,16 +37,18 @@ public:
 
         int clientAddrSize = sizeof(clientAddr);
         if((client = accept(server, (SOCKADDR *)&clientAddr, &clientAddrSize)) != INVALID_SOCKET){
-            cout << "Cliente conectado!" << endl;
+            cout << "Cliente conectado!\n" << endl;
         }
     }
 
     int Recibir(char* datos){
         int resultado = recv(client, buffer, sizeof(buffer), 0);
 
+        /*
         if(resultado > 0){
             cout << "\nEl cliente dice: " << buffer << endl;
         }
+        */
 
         strcpy(datos, buffer);
 
@@ -98,31 +104,128 @@ public:
     }
 };
 
-/// funciones
 
+
+/// ---------------------------------------- Declaración de funciones ----------------------------------------
+
+
+
+//PRE: se debe enviar el buffer con este formato: username;password
+//POST: si los datos de usuario son correctos y el usuario está activo devuelve una clase user (inicia sesion),
+// si son incorrectos o el usuario está inactivo devuelve NULL.
+// escribe un mensaje de resultado en el buffer
 User* iniciarSesion(char* datos);
+
+//PRE: recibe el nombre del usuario a buscar
+//POST: si el usuario está registrado en el archivo "autenticacion.txt" devuelve sus datos en una clase user,
+// de lo contrario retorna NULL
 User* buscarUsuario(string username);
+
+//PRE: recibe un mensaje a escribir
+//POST: escribe el mensaje en el archivo "server.log" con la hora actual
 void serverLog(string log);
-void verRegistro(char* datos);
-void usuariosMenu(char* datos, Server* server);
-void altaUsuario(char* datos);
-void modificarActivoUsuario(User* usuario, bool activo);
+
+//PRE: recibe el buffer, servidor y usuario actualmente actual
+//POST: ofrece un menú para el registro de figuritas del COLECCIONISTA
 void registrarFiguritaMenu(char * datos, Server * server, User * user);
+
+//PRE: recibe el buffer con este formato: pais;jugador
+//POST: si los datos son correctos añade la nueva figurita en el archivo "figuritas.txt" con el nombre del usuario.
+// escribe un mensaje de resultado en el buffer
 void registrarFigurita(char * datos, User * user);
-bool existePais(string pais);
+
+//PRE: se deben enviar los datos de la figurita a buscar
+//POST: si se encuentra una figurita con estos datos en el archivo "figuritas.txt" los retorna en forma de clase
+// de lo contrario retorna NULL
 Figurita* buscarFigurita(string usuario, string pais, string jugador);
+
+//PRE: se debe enviar un string con el nombre de un pais
+//POST: si se encuentra el pais en el archivo "paises.txt" retorna true,
+// si no se encuentra retorna false
+bool existePais(string pais);
+
+//PRE: se debe enviar el usuario actual y el buffer, no importan los datos del buffer
+//POST: retorna la cantidad de figuritas disponibles del usuario.
+// escribe la lista de figuritas en el buffer
 int listadoFiguritas(User* user, char* datos);
+
+//PRE: se debe enviar el servidor, el usuario actual y el buffer, no importan los datos del buffer
+//POST: ofrece un menú para los intercambios de figuritas del COLECCIONISTA
 void menuIntercambio(Server* server, User* user, char* datos);
+
+//PRE: recibe el usuario actual y el buffer con el formato de peticion: paisOf;jugadorOf;paisReq;jugadorReq
+//POST: si los datos no son válidos para realizar la petición (pais inexistente, el usuario no tiene la figurita ofrecida, etc)
+// retorna false y escribe un mensaje de error en el buffer,
+// si los datos son correctos retorna true y no escribe el buffer
 bool validarDatosPeticion(User* user, char*datos);
+
+//PRE: recibe el usuario actual y el buffer con el formato de peticion: paisOf;jugadorOf;paisReq;jugadorReq
+//POST: registra la nueva petición en el archivo "peticiones.txt" si no está duplicada.
+// busca otra petición que se empareje con la nueva y si la encuentra realiza el intercambio.
+// escribe un mensaje de resultado en el buffer
 void crearPeticion(User* user, char*datos);
+
+//PRE: recibe las dos figuritas a intercambiar
+//POST: reescribe el archivo "figuritas.txt" intercambiando el campo usuario de ambas
 void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2);
-bool modificarEstadoPeticion(string peticion, bool estado);
-int listaPeticionesPendientes(User * user, char*datos);
+
+//PRE: recibe el usuario actual y el buffer con el formato de peticion: paisOf;jugadorOf;paisReq;jugadorReq
+//POST: si los datos son correctos reescribe el archivo "peticiones.txt" con la petición del usuario en estado CANCELADA.
+// escribe un mensaje de resultado en el buffer
 void cancelarPeticion(User * user, char* datos);
+
+//PRE: se debe enviar un string con el formato de la petición a modificar: usuario;paisOf;jugadorOf;paisReq;jugadorReq;
+// se debe enviar un booleano con el estado a modificar: true = REALIZADA, false = CANCELADA
+//POST: si la petición existe retorna true y reescribe el archivo "peticiones.txt" con la modificación hecha
+bool modificarEstadoPeticion(string peticion, bool estado);
+
+//PRE: recibe el usuario actual y el buffer, no importan los datos del buffer
+//POST: retorna la cantidad de peticiones pendientes del usuario.
+// escribe la lista de peticiones pendientes en el buffer
+int listaPeticionesPendientes(User * user, char*datos);
+
+//PRE: recibe el buffer y el servidor
+//POST: ofrece un menú para la gestión de usuarios del ADMIN
+void usuariosMenu(char* datos, Server* server);
+
+//PRE: se debe enviar el buffer con este formato: username;password
+//POST: registra el nuevo usuario en el archivo "autenticacion.log"
+// si el usuario ya estaba registrado e inactivo, lo activa.
+// escribe un mensaje de resultado en el buffer
+void altaUsuario(char* datos);
+
+//PRE: se debe enviar el usuario y el estado del atributo activo a modificar
+//POST: reescribe el archivo "autenticacion.log" modificando el atributo "activo" del usuario enviado
+void modificarActivoUsuario(User* usuario, bool activo);
+
+//PRE: recibe el buffer, no importa su contenido
+//POST: retorna la cantidad de usuarios activos en el sistema.
+// escribe la lista de usuarios en el buffer
 int listaUsuariosActivos(char* datos);
+
+//PRE: recibe el buffer con el nombre de usuario a dar de baja
+//POST: si el usuario está activo y tiene rol coleccionista, lo da de baja.
+// escribe un mensaje de resultado en el buffer
 void bajaUsuario(char*datos);
+
+//PRE: recibe el nombre de usuario dado de baja
+//POST: reescribe el archivo "peticiones.txt"
+// cambiando las peticiones del usuario en estado PENDIENTE por CANCELADA
 void bajaPeticiones(string username);
+
+//PRE: recibe el nombre de usuario dado de baja
+//POST: reescribe el archivo "figuritas.txt"
+// cambiando a 0 el estado "disponible" de las tarjetas del usuario
 void bajaFiguritas(string username);
+
+//PRE: recibe el buffer, no importa su contenido
+//POST: escribe el registro de "server.log" en el buffer
+void verRegistro(char* datos);
+
+
+
+/// ---------------------------------------- Programa main ----------------------------------------
+
 
 
 int main(){
@@ -238,6 +341,11 @@ int main(){
 }
 
 
+
+/// ---------------------------------------- Implementación de funciones ----------------------------------------
+
+
+
 User* iniciarSesion(char* datos){
     string username, password;
     stringstream datosAux;
@@ -274,6 +382,8 @@ User* iniciarSesion(char* datos){
     return usuarioRespuesta;
 }
 
+
+
 User* buscarUsuario(string username){
     User * usuario = NULL;
     string linea;
@@ -304,6 +414,8 @@ User* buscarUsuario(string username){
     return usuario;
 }
 
+
+
 void serverLog(string log){
     time_t timestamp = time(NULL);
     struct tm datetime = *localtime(&timestamp);
@@ -313,170 +425,12 @@ void serverLog(string log){
     ofstream archivo;
     archivo.open("server.log", std::ios_base::app);
     archivo << timeOutput << ": " + log;
+    cout << timeOutput << ": " + log;
     archivo.flush();
+    archivo.close();
 }
 
-void verRegistro(char* datos){
-    ifstream registro("server.log");
 
-    //si el archivo está vacío
-    if(registro.peek() == std::ifstream::traits_type::eof()){
-        string mensaje = "--------------------------------------------------------------------------------\n";
-        mensaje += "No hay registros\n";
-        mensaje += "--------------------------------------------------------------------------------\n\n";
-        strcpy(datos, mensaje.data());
-
-    }else{
-        string mensaje((std::istreambuf_iterator<char>(registro)), std::istreambuf_iterator<char>());
-        strcpy(datos, mensaje.data());
-        strcat(datos, (char*)"\n\n");
-    }
-
-}
-
-void usuariosMenu(char* datos, Server* server){
-    int resultado;
-    strcpy(datos, (char*)"\n");
-    string comando;
-
-    string opciones = "--------------------------------------------------------------------------------\n";
-    opciones += "Usuarios:\n";
-    opciones += "--------------------------------------------------------------------------------\n\n";
-    opciones += "-> alta\n\n";
-    opciones += "-> baja\n\n";
-    opciones += "-> |volver\n\n";
-    opciones += "--------------------------------------------------------------------------------\n";
-
-    string opcionesAlta = "--------------------------------------------------------------------------------\n";
-    opcionesAlta += "Alta de usuarios:\n";
-    opcionesAlta += "--------------------------------------------------------------------------------\n\n";
-    opcionesAlta += "-> ingresar datos de la siguiente manera: nombre;contrasenia\n\n";
-    opcionesAlta += "-> |volver\n\n";
-    opcionesAlta += "--------------------------------------------------------------------------------\n";
-
-    string opcionesBaja = "--------------------------------------------------------------------------------\n";
-    opcionesBaja += "Baja de usuarios:\n";
-    opcionesBaja += "--------------------------------------------------------------------------------\n\n";
-    opcionesBaja += "-> nombre del usuario\n\n";
-    opcionesBaja += "-> |volver\n\n";
-    opcionesBaja += "--------------------------------------------------------------------------------\n";
-
-    do{
-        strcat(datos, opciones.data());
-
-        server->Enviar(datos);
-        ZeroMemory(datos, 4096);
-
-        resultado = server->Recibir(datos);
-        comando = datos;
-
-        /// menú de alta usuarios
-        if(comando == "alta"){
-
-            strcpy(datos, opcionesAlta.data());
-
-            server->Enviar(datos);
-            ZeroMemory(datos, 4096);
-
-            resultado = server->Recibir(datos);
-            comando = datos;
-
-            if(comando != "|volver"){
-                altaUsuario(datos);
-                comando = "|volver";
-            }else{
-                strcpy(datos, (char*)"\n");
-            }
-        }
-
-
-        /// menú de baja usuarios
-        else if(comando == "baja"){
-            if(listaUsuariosActivos(datos) > 0){
-                strcat(datos, opcionesBaja.data());
-
-                server->Enviar(datos);
-                ZeroMemory(datos, 4096);
-
-                resultado = server->Recibir(datos);
-                comando = datos;
-
-                if(comando != "|volver"){
-                    bajaUsuario(datos);
-                    comando = "|volver";
-                }else{
-                    strcpy(datos, (char*)"\n");
-                }
-            }else{
-                comando = "|volver";
-            }
-        }
-        else if(comando == "|volver"){
-            strcpy(datos, (char*)"\n");
-        }
-        else{
-            string mensaje= "--------------------------------------------------------------------------------\n";
-            mensaje+= "Comando invalido\n";
-            mensaje+= "--------------------------------------------------------------------------------\n\n";
-            strcpy(datos, mensaje.data());
-
-        }
-    }while(resultado > 0 && comando != "|volver");
-}
-
-void altaUsuario(char* datos){
-
-    // extraigo los datos
-    string username, password;
-    stringstream datosAux;
-
-    datosAux << datos;
-
-    getline(datosAux, username, ';');
-    getline(datosAux, password, ';');
-
-    string mensaje = "--------------------------------------------------------------------------------\n";
-
-    // los datos no pueden ser vacios
-
-    if(username.empty() || password.empty()){
-        mensaje+= "Error al dar de alta el nuevo usuario: datos incompletos\n";
-    }else{
-        // el usuario no tiene que estar registrado
-        User* usuario = buscarUsuario(username);
-
-        if(usuario != NULL){
-            // si ya está activo tira error
-            // si está inactivo y la contraseña es la misma lo activa
-            if(usuario->active == 1){
-                mensaje+= "Error al dar de alta el nuevo usuario: el usuario [" + username + "] ya existe\n";
-            }
-            else if(password == usuario->password){
-                modificarActivoUsuario(usuario, true);
-                mensaje+= "El usuario [" + username + "] se ha dado de alta nuevamente!!\n";
-            }
-            else{
-                mensaje+= "Error al reactivar al usuario [" + username + "]: contrasenia incorrecta\n";
-            }
-
-        }
-        else{
-            // si no está registrado guarda los datos
-            ofstream autenticacion("autenticacion.txt",std::ios_base::app);
-            autenticacion << username + ";" + password + ";COLECCIONISTA;1;\n";
-            autenticacion.flush();
-            autenticacion.close();
-
-            mensaje+= "El usuario [" + username + "] se ha registrado correctamente!!\n";
-        }
-
-    }
-
-    mensaje+= "--------------------------------------------------------------------------------\n\n";
-    strcpy(datos, mensaje.data());
-
-
-}
 
 void registrarFiguritaMenu(char * datos, Server * server, User * user){
 
@@ -511,9 +465,9 @@ void registrarFiguritaMenu(char * datos, Server * server, User * user){
 }
 
 
+
 void registrarFigurita(char * datos, User * user){
 
-    // extraigo los datos
     string pais, jugador;
     stringstream datosAux;
 
@@ -557,25 +511,7 @@ void registrarFigurita(char * datos, User * user){
     strcpy(datos, mensaje.data());
 }
 
-bool existePais(string pais){
-    bool existe = false;
 
-    ifstream paises("paises.txt");
-    string linea;
-
-    while(getline(paises, linea) && !existe){
-
-        if(linea == pais){
-            existe = true;
-        }
-
-        linea = "";
-    }
-
-    paises.close();
-
-    return existe;
-}
 
 Figurita* buscarFigurita(string usuario, string pais, string jugador){
     ifstream figuritas("figuritas.txt");
@@ -604,6 +540,30 @@ Figurita* buscarFigurita(string usuario, string pais, string jugador){
 
     return resultado;
 }
+
+
+
+bool existePais(string pais){
+    bool existe = false;
+
+    ifstream paises("paises.txt");
+    string linea;
+
+    while(getline(paises, linea) && !existe){
+
+        if(linea == pais){
+            existe = true;
+        }
+
+        linea = "";
+    }
+
+    paises.close();
+
+    return existe;
+}
+
+
 
 int listadoFiguritas(User* user, char* datos){
     ifstream figuritas("figuritas.txt");
@@ -644,6 +604,8 @@ int listadoFiguritas(User* user, char* datos){
 
     return cant;
 }
+
+
 
 void menuIntercambio(Server* server, User* user, char* datos){
     int resultado;
@@ -735,15 +697,14 @@ void menuIntercambio(Server* server, User* user, char* datos){
     }while(resultado > 0 && comando != "|volver");
 }
 
+
+
 bool validarDatosPeticion(User* user, char*datos){
+
+    bool valido = true;
     string paisOf, jugadorOf, paisReq, jugadorReq;
     stringstream datosAux;
-    bool valido = true;
 
-    string error = "--------------------------------------------------------------------------------\n";
-    error += "Error al crear la peticion de intercambio:\n";
-
-    // extraer datos
     datosAux << datos;
 
     getline(datosAux, paisOf, ';');
@@ -751,13 +712,15 @@ bool validarDatosPeticion(User* user, char*datos){
     getline(datosAux, paisReq, ';');
     getline(datosAux, jugadorReq, ';');
 
+    string error = "--------------------------------------------------------------------------------\n";
+    error += "Error al crear la peticion de intercambio:\n";
+
     // validar datos completos
 
     if(paisOf.empty() || jugadorOf.empty() || paisReq.empty() || jugadorReq.empty()){
         error+= "Datos incompletos\n";
         valido = false;
     }
-
     if(paisOf.empty()){
         error+= "Falta pais ofrecido\n";
     }
@@ -797,14 +760,14 @@ bool validarDatosPeticion(User* user, char*datos){
     return valido;
 }
 
+
+
 void crearPeticion(User* user, char*datos){
 
     string paisOf, jugadorOf, paisReq, jugadorReq, linea;
     stringstream datosAux;
 
     string mensaje = "--------------------------------------------------------------------------------\n";
-
-    // extraer datos
 
     datosAux << datos;
 
@@ -813,7 +776,7 @@ void crearPeticion(User* user, char*datos){
     getline(datosAux, paisReq, ';');
     getline(datosAux, jugadorReq, ';');
 
-    // verifico peticion duplicada
+    // verificar peticion duplicada
 
     bool duplicada = false;
     fstream peticiones("peticiones.txt");
@@ -836,8 +799,6 @@ void crearPeticion(User* user, char*datos){
         strcpy(datos, mensaje.data());
         return;
     }
-
-
 
     // busco emparejamiento
 
@@ -868,7 +829,6 @@ void crearPeticion(User* user, char*datos){
 
     peticiones.close();
 
-
     // realizar el intercambio y marcar como realizada la peticion emparejada
 
     if(emparejado){
@@ -880,7 +840,6 @@ void crearPeticion(User* user, char*datos){
         emparejamientoAux= usuarioEmparejamiento + ";" + emparejamientoPeticion;
         modificarEstadoPeticion(emparejamientoAux, true);
     }
-
 
     // guardar la nueva peticion
 
@@ -895,10 +854,13 @@ void crearPeticion(User* user, char*datos){
         mensaje += "\nSu peticion se encuentra en estado pendiente\n";
     }
 
+    peticiones.close();
     mensaje += "--------------------------------------------------------------------------------\n\n";
     strcpy(datos, mensaje.data());
 
 }
+
+
 
 void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2){
     ifstream original("figuritas.txt");
@@ -932,6 +894,76 @@ void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2){
     remove("figuritas.txt");
     rename("figuritasCopia.txt", "figuritas.txt");
 }
+
+
+
+void cancelarPeticion(User * user, char* datos){
+    stringstream datosAux;
+    datosAux << datos;
+    string paisOf, jugadorOf, paisReq, jugadorReq;
+
+    string mensaje = "--------------------------------------------------------------------------------\n";
+
+    getline(datosAux, paisOf, ';');
+    getline(datosAux, jugadorOf, ';');
+    getline(datosAux, paisReq, ';');
+    getline(datosAux, jugadorReq, ';');
+
+    // valida que los datos sean correctos
+
+    if(paisOf.empty() || jugadorOf.empty() || paisReq.empty() || jugadorReq.empty()){
+        mensaje += "Error: Datos incompletos\n";
+    }
+    else{
+        // cancela la peticion si existe
+
+        string peticion =  user->username + ";" + paisOf + ";" + jugadorOf + ";" + paisReq + ";" + jugadorReq + ";";
+
+        if(modificarEstadoPeticion(peticion, false)){
+            mensaje += "La peticion fue cancelada con exito!!\n";
+        }else{
+            mensaje += "Error: La peticion ingresada no existe\n";
+        }
+    }
+
+    mensaje += "--------------------------------------------------------------------------------\n\n";
+    strcpy(datos, mensaje.data());
+}
+
+
+
+bool modificarEstadoPeticion(string peticion, bool estado){
+    ifstream original("peticiones.txt");
+    fstream copia("peticionesCopia.txt", std::ios_base::app);
+    string linea;
+    bool encontrado;
+    string peticionAux = peticion + "PENDIENTE;";
+
+    while(original >> linea){
+
+        if(linea == peticionAux && !encontrado){
+            encontrado = true;
+
+            if(estado){
+                linea = peticion + "REALIZADA;";
+            }else{
+                linea = peticion + "CANCELADA;";
+            }
+        }
+
+        copia << linea << "\n";
+    }
+
+    original.close();
+    copia.close();
+
+    remove("peticiones.txt");
+    rename("peticionesCopia.txt", "peticiones.txt");
+
+    return encontrado;
+}
+
+
 
 int listaPeticionesPendientes(User * user, char*datos){
 
@@ -980,69 +1012,184 @@ int listaPeticionesPendientes(User * user, char*datos){
     return cant;
 }
 
-void cancelarPeticion(User * user, char* datos){
-    stringstream datosAux;
-    datosAux << datos;
-    string paisOf, jugadorOf, paisReq, jugadorReq;
 
-    string mensaje = "--------------------------------------------------------------------------------\n";
 
-    getline(datosAux, paisOf, ';');
-    getline(datosAux, jugadorOf, ';');
-    getline(datosAux, paisReq, ';');
-    getline(datosAux, jugadorReq, ';');
+void usuariosMenu(char* datos, Server* server){
+    int resultado;
+    strcpy(datos, (char*)"\n");
+    string comando;
 
-    // valida que los datos sean correctos
+    string opciones = "--------------------------------------------------------------------------------\n";
+    opciones += "Usuarios:\n";
+    opciones += "--------------------------------------------------------------------------------\n\n";
+    opciones += "-> alta\n\n";
+    opciones += "-> baja\n\n";
+    opciones += "-> |volver\n\n";
+    opciones += "--------------------------------------------------------------------------------\n";
 
-    if(paisOf.empty() || jugadorOf.empty() || paisReq.empty() || jugadorReq.empty()){
-        mensaje += "Error: Datos incompletos\n";
-    }
-    else{
-        // cancela la peticion si existe
+    string opcionesAlta = "--------------------------------------------------------------------------------\n";
+    opcionesAlta += "Alta de usuarios:\n";
+    opcionesAlta += "--------------------------------------------------------------------------------\n\n";
+    opcionesAlta += "-> ingresar datos de la siguiente manera: nombre;contrasenia\n\n";
+    opcionesAlta += "-> |volver\n\n";
+    opcionesAlta += "--------------------------------------------------------------------------------\n";
 
-        string peticion =  user->username + ";" + paisOf + ";" + jugadorOf + ";" + paisReq + ";" + jugadorReq + ";";
+    string opcionesBaja = "--------------------------------------------------------------------------------\n";
+    opcionesBaja += "Baja de usuarios:\n";
+    opcionesBaja += "--------------------------------------------------------------------------------\n\n";
+    opcionesBaja += "-> nombre del usuario\n\n";
+    opcionesBaja += "-> |volver\n\n";
+    opcionesBaja += "--------------------------------------------------------------------------------\n";
 
-        if(modificarEstadoPeticion(peticion, false)){
-            mensaje += "La peticion fue cancelada con exito!!\n";
-        }else{
-            mensaje += "Error: La peticion ingresada no existe\n";
-        }
-    }
+    do{
+        strcat(datos, opciones.data());
 
-    mensaje += "--------------------------------------------------------------------------------\n\n";
-    strcpy(datos, mensaje.data());
-}
+        server->Enviar(datos);
+        ZeroMemory(datos, 4096);
 
-bool modificarEstadoPeticion(string peticion, bool estado){
-    ifstream original("peticiones.txt");
-    fstream copia("peticionesCopia.txt", std::ios_base::app);
-    string linea;
-    bool encontrado;
-    string peticionAux = peticion + "PENDIENTE;";
+        resultado = server->Recibir(datos);
+        comando = datos;
 
-    while(original >> linea){
+        /// menú de alta usuarios
+        if(comando == "alta"){
 
-        if(linea == peticionAux && !encontrado){
-            encontrado = true;
+            strcpy(datos, opcionesAlta.data());
 
-            if(estado){
-                linea = peticion + "REALIZADA;";
+            server->Enviar(datos);
+            ZeroMemory(datos, 4096);
+
+            resultado = server->Recibir(datos);
+            comando = datos;
+
+            if(comando != "|volver"){
+                altaUsuario(datos);
+                comando = "|volver";
             }else{
-                linea = peticion + "CANCELADA;";
+                strcpy(datos, (char*)"\n");
             }
         }
 
+
+        /// menú de baja usuarios
+        else if(comando == "baja"){
+            if(listaUsuariosActivos(datos) > 0){
+                strcat(datos, opcionesBaja.data());
+
+                server->Enviar(datos);
+                ZeroMemory(datos, 4096);
+
+                resultado = server->Recibir(datos);
+                comando = datos;
+
+                if(comando != "|volver"){
+                    bajaUsuario(datos);
+                    comando = "|volver";
+                }else{
+                    strcpy(datos, (char*)"\n");
+                }
+            }else{
+                comando = "|volver";
+            }
+        }
+        else if(comando == "|volver"){
+            strcpy(datos, (char*)"\n");
+        }
+        else{
+            string mensaje= "--------------------------------------------------------------------------------\n";
+            mensaje+= "Comando invalido\n";
+            mensaje+= "--------------------------------------------------------------------------------\n\n";
+            strcpy(datos, mensaje.data());
+
+        }
+    }while(resultado > 0 && comando != "|volver");
+}
+
+
+
+void altaUsuario(char* datos){
+
+    string username, password;
+    stringstream datosAux;
+
+    datosAux << datos;
+
+    getline(datosAux, username, ';');
+    getline(datosAux, password, ';');
+
+    string mensaje = "--------------------------------------------------------------------------------\n";
+
+    // los datos no pueden ser vacios
+
+    if(username.empty() || password.empty()){
+        mensaje+= "Error al dar de alta el nuevo usuario: datos incompletos\n";
+    }else{
+        // el usuario no tiene que estar registrado
+        User* usuario = buscarUsuario(username);
+
+        if(usuario != NULL){
+            // si ya está activo tira error
+            // si está inactivo y la contraseña es la misma lo activa
+            if(usuario->active == 1){
+                mensaje+= "Error al dar de alta el nuevo usuario: el usuario [" + username + "] ya existe\n";
+            }
+            else if(password == usuario->password){
+                modificarActivoUsuario(usuario, true);
+                mensaje+= "El usuario [" + username + "] se ha dado de alta nuevamente!!\n";
+            }
+            else{
+                mensaje+= "Error al reactivar al usuario [" + username + "]: contrasenia incorrecta\n";
+            }
+
+        }
+        else{
+            // si no está registrado guarda los datos
+            ofstream autenticacion("autenticacion.txt",std::ios_base::app);
+            autenticacion << username + ";" + password + ";COLECCIONISTA;1;\n";
+            autenticacion.flush();
+            autenticacion.close();
+
+            mensaje+= "El usuario [" + username + "] se ha registrado correctamente!!\n";
+        }
+
+    }
+
+    mensaje+= "--------------------------------------------------------------------------------\n\n";
+    strcpy(datos, mensaje.data());
+
+}
+
+
+
+void modificarActivoUsuario(User* usuario, bool activo){
+    ifstream original("autenticacion.txt");
+    fstream copia("autenticacionCopia.txt", std::ios_base::app);
+    string linea;
+
+    while(original >> linea){
+
+        if(linea.find(usuario->username) != std::string::npos){
+
+            if(activo){
+                linea = usuario->username + ";" + usuario->password + ";" + usuario->role + ";" + "1" + ";";
+            }else{
+                linea = usuario->username + ";" + usuario->password + ";" + usuario->role + ";" + "0" + ";";
+            }
+
+        }
+
         copia << linea << "\n";
+
+        linea = "";
     }
 
     original.close();
     copia.close();
 
-    remove("peticiones.txt");
-    rename("peticionesCopia.txt", "peticiones.txt");
-
-    return encontrado;
+    remove("autenticacion.txt");
+    rename("autenticacionCopia.txt", "autenticacion.txt");
 }
+
+
 
 int listaUsuariosActivos(char* datos){
     string mensaje = "--------------------------------------------------------------------------------\n";
@@ -1085,6 +1232,7 @@ int listaUsuariosActivos(char* datos){
 }
 
 
+
 void bajaUsuario(char*datos){
 
     string username = datos;
@@ -1113,34 +1261,7 @@ void bajaUsuario(char*datos){
     strcpy(datos, mensaje.data());
 }
 
-void modificarActivoUsuario(User* usuario, bool activo){
-    ifstream original("autenticacion.txt");
-    fstream copia("autenticacionCopia.txt", std::ios_base::app);
-    string linea;
 
-    while(original >> linea){
-
-        if(linea.find(usuario->username) != std::string::npos){
-
-            if(activo){
-                linea = usuario->username + ";" + usuario->password + ";" + usuario->role + ";" + "1" + ";";
-            }else{
-                linea = usuario->username + ";" + usuario->password + ";" + usuario->role + ";" + "0" + ";";
-            }
-
-        }
-
-        copia << linea << "\n";
-
-        linea = "";
-    }
-
-    original.close();
-    copia.close();
-
-    remove("autenticacion.txt");
-    rename("autenticacionCopia.txt", "autenticacion.txt");
-}
 
 void bajaPeticiones(string username){
     ifstream original("peticiones.txt");
@@ -1180,6 +1301,8 @@ void bajaPeticiones(string username){
     rename("peticionesCopia.txt", "peticiones.txt");
 }
 
+
+
 void bajaFiguritas(string username){
     ifstream original("figuritas.txt");
     fstream copia("figuritasCopia.txt", std::ios_base::app);
@@ -1212,4 +1335,25 @@ void bajaFiguritas(string username){
 
     remove("figuritas.txt");
     rename("figuritasCopia.txt", "figuritas.txt");
+}
+
+
+
+void verRegistro(char* datos){
+    ifstream registro("server.log");
+
+    //si el archivo está vacío
+    if(registro.peek() == std::ifstream::traits_type::eof()){
+        string mensaje = "--------------------------------------------------------------------------------\n";
+        mensaje += "No hay registros\n";
+        mensaje += "--------------------------------------------------------------------------------\n\n";
+        strcpy(datos, mensaje.data());
+
+    }else{
+        //copio todo el log en un string
+        string mensaje((std::istreambuf_iterator<char>(registro)), std::istreambuf_iterator<char>());
+        strcpy(datos, mensaje.data());
+        strcat(datos, (char*)"\n\n");
+    }
+
 }

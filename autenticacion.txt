@@ -1,5 +1,5 @@
 leo;1234;ADMIN;1;
-jeff;collector;COLECCIONISTA;0;
+jeff;collector;COLECCIONISTA;1;
 random;3333;COLECCIONISTA;1;
 queso;rallado;COLECCIONISTA;1;
 huevo;revuelto;COLECCIONISTA;0;

@@ -64,7 +64,7 @@ int main(){
     char ip[32];
     int port;
 
-    /*
+    ///ingresar ip y puerto
     do{
         ZeroMemory(ip, 32);
 
@@ -76,10 +76,8 @@ int main(){
         system("cls");
 
     }while( Cliente->conectar(ip, port) != 0 );
-    */
 
-    Cliente->conectar((char*)"192.168.0.101", 5555);
-
+    ///mensajes
     while(true){
         system("cls");
         Cliente->Recibir();
