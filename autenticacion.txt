@@ -1,5 +1,5 @@
-leo;1234;ADMIN;1;
-jeff;collector;COLECCIONISTA;1;
-random;3333;COLECCIONISTA;1;
-queso;rallado;COLECCIONISTA;1;
-huevo;revuelto;COLECCIONISTA;0;
+admin;ryc@UNLa.2024;ADMIN;1;
+linus.thor;ubuntu;COLECCIONISTA;1;
+luciana2004;hockey;COLECCIONISTA;1;
+perezh;hamburguesa;COLECCIONISTA;0;
+jmfangio;mecha196;COLECCIONISTA;1;

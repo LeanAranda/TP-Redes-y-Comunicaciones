@@ -3,8 +3,7 @@
 
 using namespace std;
 
-///ip = 192.168.0.101
-///port = 5555
+
 
 class Client{
 public:
@@ -34,7 +33,6 @@ public:
     }
 
     void Enviar(){
-        //cout<<"Escribe el mensaje a enviar: ";
         cin>>this->buffer;
         send(server, buffer, sizeof(buffer), 0);
         memset(buffer, 0, sizeof(buffer));
@@ -68,9 +66,9 @@ int main(){
     do{
         ZeroMemory(ip, 32);
 
-        cout<<"Ingrese ip: ";
+        cout<<"Ingrese su ip: ";
         cin >> ip;
-        cout<<"Ingrese puerto: ";
+        cout<<"Ingrese puerto a conectar: ";
         cin >> port;
 
         system("cls");

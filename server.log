@@ -1,9 +1,20 @@
-10/24/24 04:21:53 PM: ============================================
-10/24/24 04:21:53 PM: Servidor iniciado
-10/24/24 04:21:53 PM: ============================================
-10/24/24 04:21:53 PM: Socket creado. Puerto de escucha: 5555
-10/24/24 04:22:03 PM: Inicio de sesion -- Usuario leo
-10/24/24 04:22:06 PM: Cierre de sesion -- Usuario leo
-10/24/24 04:22:07 PM: ============================================
-10/24/24 04:22:07 PM: Cerrando servidor y socket...
-10/24/24 04:22:07 PM: ============================================
+10/26/24 10:50:17 PM: ========================================================================================
+10/26/24 10:50:17 PM: Servidor iniciado
+10/26/24 10:50:17 PM: ========================================================================================
+10/26/24 10:50:17 PM: Socket creado. Puerto de escucha: 5000
+10/26/24 10:50:35 PM: Cliente conectado
+10/26/24 10:50:59 PM: Inicio de sesion -- Usuario admin
+10/26/24 10:52:31 PM: Cierre de sesion -- Usuario admin
+10/26/24 10:52:42 PM: Inicio de sesion -- Usuario luciana2004
+10/26/24 10:54:05 PM: Cierre de sesion -- Usuario luciana2004
+10/26/24 10:54:17 PM: Inicio de sesion -- Usuario jmfangio
+10/26/24 10:55:24 PM: Cierre de sesion -- Usuario jmfangio
+10/26/24 10:55:35 PM: Inicio de sesion -- Usuario linus.thor
+10/26/24 10:57:11 PM: Cierre de sesion -- Usuario linus.thor
+10/26/24 10:57:23 PM: Inicio de sesion -- Usuario perezh
+10/26/24 10:58:30 PM: Cierre de sesion -- Usuario perezh
+10/26/24 10:58:40 PM: Inicio de sesion -- Usuario linus.thor
+10/26/24 10:59:23 PM: Cierre de sesion -- Usuario linus.thor
+10/26/24 10:59:38 PM: Inicio de sesion -- Usuario admin
+10/26/24 11:00:09 PM: Cliente desconectado
+10/26/24 11:00:09 PM: Escuchando para conexiones entrantes en el puerto 5000

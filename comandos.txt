@@ -1,5 +1,0 @@
-//compilar server
-g++ server.cpp -oServer -lWs2_32
-
-//compilar cliente
-g++ client.cpp -oClient -lWs2_32 -lMswsock -lAdvApi32
