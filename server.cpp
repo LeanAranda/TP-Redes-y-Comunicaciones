@@ -161,8 +161,8 @@ void crearPeticion(User* user, char*datos);
 //POST: reescribe el archivo "figuritas.txt" intercambiando el campo usuario de ambas
 void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2);
 
-//PRE: recibe el usuario actual y el buffer con el formato de peticion: pais_ofrecido;jugador_ofrecido;pais_requerido;jugador_requerido
-//POST: si los datos son correctos reescribe el archivo "peticiones.txt" con la petición del usuario en estado CANCELADA.
+//PRE: recibe el usuario actual y el buffer con el numero de petición a cancelar
+//POST: si el número es correcto reescribe el archivo "peticiones.txt" con la petición del usuario en estado CANCELADA.
 // escribe un mensaje de resultado en el buffer
 void cancelarPeticion(User * user, char* datos);
 
@@ -274,16 +274,16 @@ int main(){
                 opciones += "--------------------------------------------------------------------------------\n\n";
 
                 if(usuario->role == "COLECCIONISTA"){
-                    opciones += "-> registrar\n\n";
-                    opciones += "-> intercambio\n\n";
+                    opciones += "1) registrar\n\n";
+                    opciones += "2) intercambio\n\n";
                 }
 
                 if(usuario->role == "ADMIN"){
-                    opciones += "-> usuarios\n\n";
-                    opciones += "-> registro\n\n";
+                    opciones += "1) usuarios\n\n";
+                    opciones += "2) registro\n\n";
                 }
 
-                opciones += "-> salir\n\n";
+                opciones += "0) salir\n\n";
                 opciones += "--------------------------------------------------------------------------------\n";
 
                 string comando;
@@ -299,19 +299,19 @@ int main(){
                     comando = datos;
 
                     /// comandos
-                    if(comando == "registrar" && usuario->role == "COLECCIONISTA"){
+                    if(comando == "1" && usuario->role == "COLECCIONISTA"){         //registrar
                         registrarFiguritaMenu(datos, Servidor, usuario);
                     }
-                    else if(comando == "intercambio" && usuario->role == "COLECCIONISTA"){
+                    else if(comando == "2" && usuario->role == "COLECCIONISTA"){    //intercambio
                         menuIntercambio(Servidor, usuario, datos);
                     }
-                    else if(comando == "usuarios" && usuario->role == "ADMIN"){
+                    else if(comando == "1" && usuario->role == "ADMIN"){            //usuarios
                         usuariosMenu(datos, Servidor);
                     }
-                    else if(comando == "registro" && usuario->role == "ADMIN"){
+                    else if(comando == "2" && usuario->role == "ADMIN"){            //registro
                         verRegistro(datos);
                     }
-                    else if(comando == "salir"){
+                    else if(comando == "0"){                                        //salir
                         serverLog("Cierre de sesion -- Usuario " + usuario->username +"\n");
 
                         string mensaje= "--------------------------------------------------------------------------------\n";
@@ -330,7 +330,7 @@ int main(){
                         strcpy(datos, mensaje.data());
                     }
 
-                }while(comando != "salir" && resultado > 0);
+                }while(comando != "0" && resultado > 0);
             }
 
         }while(resultado > 0);
@@ -441,7 +441,7 @@ void registrarFiguritaMenu(char * datos, Server * server, User * user){
     opciones += "Registrar figurita:\n";
     opciones += "--------------------------------------------------------------------------------\n\n";
     opciones += "-> ingresar datos de la siguiente manera: pais;jugador\n\n";
-    opciones += "-> |volver\n\n";
+    opciones += "0) volver\n\n";
     opciones += "--------------------------------------------------------------------------------\n";
 
     strcpy(datos, (char*)"\n");
@@ -455,13 +455,13 @@ void registrarFiguritaMenu(char * datos, Server * server, User * user){
         resultado = server->Recibir(datos);
         comando = datos;
 
-        if(comando != "|volver"){
+        if(comando != "0"){
             registrarFigurita(datos, user);
-            comando = "|volver";
+            comando = "0";
         }else{
             strcpy(datos, (char*)"\n");
         }
-    }while(resultado > 0 && comando != "|volver");
+    }while(resultado > 0 && comando != "0");
 }
 
 
@@ -655,23 +655,23 @@ void menuIntercambio(Server* server, User* user, char* datos){
     string opciones = "--------------------------------------------------------------------------------\n";
     opciones += "Intercambio:\n";
     opciones += "--------------------------------------------------------------------------------\n\n";
-    opciones += "-> peticion\n\n";
-    opciones += "-> cancelacion\n\n";
-    opciones += "-> |volver\n\n";
+    opciones += "1) peticion\n\n";
+    opciones += "2) cancelacion\n\n";
+    opciones += "0) volver\n\n";
     opciones += "--------------------------------------------------------------------------------\n";
 
     string opcionesPeticion = "--------------------------------------------------------------------------------\n";
     opcionesPeticion += "Peticion de intercambio:\n";
     opcionesPeticion += "--------------------------------------------------------------------------------\n\n";
     opcionesPeticion += "-> ingresar datos: id_figurita_ofrecida;pais_requerido;jugador_requerido\n\n";
-    opcionesPeticion += "-> |volver\n\n";
+    opcionesPeticion += "0) volver\n\n";
     opcionesPeticion += "--------------------------------------------------------------------------------\n";
 
     string opcionesCancelacion = "--------------------------------------------------------------------------------\n";
     opcionesCancelacion += "Cancelacion de intercambio:\n";
     opcionesCancelacion += "--------------------------------------------------------------------------------\n\n";
-    opcionesCancelacion += "-> ingresar datos: pais_ofrecido;jugador_ofrecido;pais_requerido;jugador_requerido\n\n";
-    opcionesCancelacion += "-> |volver\n\n";
+    opcionesCancelacion += "-> ingresar numero de la peticion a cancelar: \n\n";
+    opcionesCancelacion += "0) volver\n\n";
     opcionesCancelacion += "--------------------------------------------------------------------------------\n";
 
     strcpy(datos, (char*)"\n");
@@ -685,7 +685,7 @@ void menuIntercambio(Server* server, User* user, char* datos){
         resultado = server->Recibir(datos);
         comando = datos;
 
-        if(comando == "peticion"){
+        if(comando == "1"){                 //peticion
 
             if(listadoFiguritas(user, datos) > 0){
                 strcat(datos, opcionesPeticion.data());
@@ -696,16 +696,16 @@ void menuIntercambio(Server* server, User* user, char* datos){
 
                 comando = datos;
 
-                if(comando == "|volver"){
+                if(comando == "0"){         //volver
                     strcpy(datos,(char*)"\n");
                 }
                 else if(validarDatosPeticion(user, datos)){
                     crearPeticion(user, datos);
                 }
             }
-            comando = "|volver";
+            comando = "0";
         }
-        else if(comando == "cancelacion"){
+        else if(comando == "2"){            //cancelacion
 
             if(listaPeticionesPendientes(user, datos) > 0){
                 strcat(datos, opcionesCancelacion.data());
@@ -716,7 +716,7 @@ void menuIntercambio(Server* server, User* user, char* datos){
 
                 comando = datos;
 
-                if(comando == "|volver"){
+                if(comando == "0"){         //volver
                     strcpy(datos,(char*)"\n");
                 }else{
                     cancelarPeticion(user, datos);
@@ -724,9 +724,9 @@ void menuIntercambio(Server* server, User* user, char* datos){
 
             }
 
-            comando = "|volver";
+            comando = "0";
         }
-        else if(comando == "|volver"){
+        else if(comando == "0"){            //volver
             strcpy(datos, (char*)"\n");
         }
         else{
@@ -736,7 +736,7 @@ void menuIntercambio(Server* server, User* user, char* datos){
             strcpy(datos, mensaje.data());
 
         }
-    }while(resultado > 0 && comando != "|volver");
+    }while(resultado > 0 && comando != "0");
 }
 
 
@@ -772,9 +772,21 @@ bool validarDatosPeticion(User* user, char*datos){
         error+= "Falta jugador requerido\n";
     }
 
-    // validar figurita ofrecida
 
-    Figurita * figuritaOf = buscarFiguritaId(stoi(idOf));
+    // validar figurita ofrecida
+    Figurita * figuritaOf = NULL;
+
+    //comprobar que el id es un número
+    stringstream idAux(idOf);
+    int id;
+    idAux >> id;
+
+    if(idAux.eof() && !idAux.fail()){
+        figuritaOf = buscarFiguritaId(id);
+    }else{
+        error+= "El id es incorrecto\n";
+        valido = false;
+    }
 
     if(figuritaOf == NULL){
         error+= "No existe una figurita con el id [" + idOf + "]\n";
@@ -944,31 +956,59 @@ void intercambiarFiguritas(Figurita* figurita1, Figurita* figurita2){
 
 
 void cancelarPeticion(User * user, char* datos){
-    stringstream datosAux;
-    datosAux << datos;
-    string paisOf, jugadorOf, paisReq, jugadorReq;
 
     string mensaje = "--------------------------------------------------------------------------------\n";
 
-    getline(datosAux, paisOf, ';');
-    getline(datosAux, jugadorOf, ';');
-    getline(datosAux, paisReq, ';');
-    getline(datosAux, jugadorReq, ';');
+    stringstream numAux;
+    numAux << datos;
+    int num;
+    numAux >> num;
 
-    // valida que los datos sean correctos
-
-    if(paisOf.empty() || jugadorOf.empty() || paisReq.empty() || jugadorReq.empty()){
-        mensaje += "Error: Datos incompletos\n";
+    // verifica que se ingresó un numero
+    if(numAux.eof() && numAux.fail()){
+        mensaje+= "Error: datos incorrectos\n";
     }
     else{
-        // cancela la peticion si existe
+        // verifica que se ingresó el numero correcto
+        int cantPeticiones = listaPeticionesPendientes(user, datos);
+        if(num <= 0 || num > cantPeticiones){
+            mensaje+= "Error: datos incorrectos\n";
+        }
+        // busca la n petición pendiente y la cancela
+        else{
+            string linea, username, paisOf, jugadorOf, paisReq, jugadorReq;
+            ifstream peticiones("peticiones.txt");
+            int i = 0;
 
-        string peticion =  user->username + ";" + paisOf + ";" + jugadorOf + ";" + paisReq + ";" + jugadorReq + ";";
+            while(getline(peticiones, linea) && i != num){
+                stringstream lineaAux;
+                lineaAux << linea;
 
-        if(modificarEstadoPeticion(peticion, false)){
-            mensaje += "La peticion fue cancelada con exito!!\n";
-        }else{
-            mensaje += "Error: La peticion ingresada no existe\n";
+                getline(lineaAux, username, ';');
+
+                if(username == user->username && linea.find("PENDIENTE") != std::string::npos){
+                    i++;
+
+                    if(i == num){
+                        getline(lineaAux, paisOf, ';');
+                        getline(lineaAux, jugadorOf, ';');
+                        getline(lineaAux, paisReq, ';');
+                        getline(lineaAux, jugadorReq, ';');
+                    }
+                }
+
+                linea= "";
+            }
+
+            peticiones.close();
+
+            string peticion =  user->username + ";" + paisOf + ";" + jugadorOf + ";" + paisReq + ";" + jugadorReq + ";";
+
+            if(modificarEstadoPeticion(peticion, false)){
+                mensaje += "La peticion fue cancelada con exito!!\n";
+            }else{
+                mensaje += "Error: La peticion ingresada no existe\n";
+            }
         }
     }
 
@@ -1037,7 +1077,7 @@ int listaPeticionesPendientes(User * user, char*datos){
 
             if(estado == "PENDIENTE"){
                 cant++;
-                lista+="* Ofrecido: " + paisOf + ";" + jugadorOf + "  Requerido: " + paisReq + ";" + jugadorReq + "\n";
+                lista+= std::to_string(cant) + ") Ofrecido: " + paisOf + ";" + jugadorOf + "  Requerido: " + paisReq + ";" + jugadorReq + "\n";
             }
         }
 
@@ -1068,23 +1108,23 @@ void usuariosMenu(char* datos, Server* server){
     string opciones = "--------------------------------------------------------------------------------\n";
     opciones += "Usuarios:\n";
     opciones += "--------------------------------------------------------------------------------\n\n";
-    opciones += "-> alta\n\n";
-    opciones += "-> baja\n\n";
-    opciones += "-> |volver\n\n";
+    opciones += "1) alta\n\n";
+    opciones += "2) baja\n\n";
+    opciones += "0) volver\n\n";
     opciones += "--------------------------------------------------------------------------------\n";
 
     string opcionesAlta = "--------------------------------------------------------------------------------\n";
     opcionesAlta += "Alta de usuarios:\n";
     opcionesAlta += "--------------------------------------------------------------------------------\n\n";
     opcionesAlta += "-> ingresar datos de la siguiente manera: nombre;contrasenia\n\n";
-    opcionesAlta += "-> |volver\n\n";
+    opcionesAlta += "0) volver\n\n";
     opcionesAlta += "--------------------------------------------------------------------------------\n";
 
     string opcionesBaja = "--------------------------------------------------------------------------------\n";
     opcionesBaja += "Baja de usuarios:\n";
     opcionesBaja += "--------------------------------------------------------------------------------\n\n";
     opcionesBaja += "-> nombre del usuario\n\n";
-    opcionesBaja += "-> |volver\n\n";
+    opcionesBaja += "0) volver\n\n";
     opcionesBaja += "--------------------------------------------------------------------------------\n";
 
     do{
@@ -1097,7 +1137,7 @@ void usuariosMenu(char* datos, Server* server){
         comando = datos;
 
         /// menú de alta usuarios
-        if(comando == "alta"){
+        if(comando == "1"){                     //alta
 
             strcpy(datos, opcionesAlta.data());
 
@@ -1107,9 +1147,9 @@ void usuariosMenu(char* datos, Server* server){
             resultado = server->Recibir(datos);
             comando = datos;
 
-            if(comando != "|volver"){
+            if(comando != "0"){                 //volver
                 altaUsuario(datos);
-                comando = "|volver";
+                comando = "0";
             }else{
                 strcpy(datos, (char*)"\n");
             }
@@ -1117,7 +1157,7 @@ void usuariosMenu(char* datos, Server* server){
 
 
         /// menú de baja usuarios
-        else if(comando == "baja"){
+        else if(comando == "2"){                //baja
             if(listaUsuariosActivos(datos) > 0){
                 strcat(datos, opcionesBaja.data());
 
@@ -1127,17 +1167,17 @@ void usuariosMenu(char* datos, Server* server){
                 resultado = server->Recibir(datos);
                 comando = datos;
 
-                if(comando != "|volver"){
+                if(comando != "0"){             //volver
                     bajaUsuario(datos);
-                    comando = "|volver";
+                    comando = "0";
                 }else{
                     strcpy(datos, (char*)"\n");
                 }
             }else{
-                comando = "|volver";
+                comando = "0";
             }
         }
-        else if(comando == "|volver"){
+        else if(comando == "0"){                //volver
             strcpy(datos, (char*)"\n");
         }
         else{
@@ -1147,7 +1187,7 @@ void usuariosMenu(char* datos, Server* server){
             strcpy(datos, mensaje.data());
 
         }
-    }while(resultado > 0 && comando != "|volver");
+    }while(resultado > 0 && comando != "0");
 }
 
 
