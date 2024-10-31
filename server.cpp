@@ -235,9 +235,6 @@ int main(){
     strcpy(datos, "\n");
     int resultado;
 
-    //iniciar con un log vacio
-    remove("server.log");
-
     serverLog("========================================================================================\n");
     serverLog("Servidor iniciado\n");
     serverLog("========================================================================================\n");
